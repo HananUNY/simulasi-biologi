@@ -108,12 +108,23 @@
             padding: 12px;
             border-radius: 8px;
         }
+        
+        .control-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 5px;
+        }
 
         label { display: block; font-size: 0.8rem; margin-bottom: 5px; font-weight: 600; }
         .sub-label { font-size: 0.7rem; color: #94a3b8; margin-bottom: 5px; display: block; line-height: 1.2; }
         
         input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--accent-color); height: 6px; }
-        input[type="range"].restore-slider { accent-color: var(--success-color); }
+        input[type="range"].restore-slider { accent-color: #10b981; } /* Emerald */
+        input[type="range"].reboisasi-slider { accent-color: #3b82f6; } /* Blue */
         input[type="range"].logging-slider { accent-color: var(--danger-color); }
         input[type="range"].natural-slider { accent-color: #f59e0b; }
 
@@ -310,7 +321,7 @@
 <!-- MODAL DISCLAIMER -->
 <div id="introModal" class="modal">
     <div class="modal-content">
-        <h2>ℹ️ Perhatian </h2>
+        <h2>ℹ️ Penafian & Tujuan Edukasi</h2>
         <p>
             Simulasi ini adalah <strong>model penyederhanaan</strong> (abstraksi) untuk tujuan pendidikan semata. Perilaku hidrologi, ekosistem, dan cuaca di dunia nyata jauh lebih kompleks dan dipengaruhi oleh ribuan variabel lain yang tidak tercakup di sini.
         </p>
@@ -335,7 +346,6 @@
                 Evapotranspirasi: Tinggi
             </div>
             
-            <!-- Speed Control Buttons -->
             <div class="speed-controls">
                 <button class="btn-speed active" id="spd1" onclick="setSimSpeed(1, this)">1x</button>
                 <button class="btn-speed" id="spd2" onclick="setSimSpeed(2, this)">2x</button>
@@ -343,7 +353,10 @@
             </div>
         </div>
 
+        <!-- CONTROL GROUP 1: DEGRADASI -->
         <div class="control-group">
+            <div class="control-header">1. Faktor Degradasi</div>
+            
             <label style="color: #f87171;">
                 Laju Deforestasi (Manusia)
                 <span id="loggingVal" class="value-display" style="color:#f87171">Rendah</span>
@@ -351,7 +364,6 @@
             <span class="sub-label">Kecepatan penebangan/pembukaan lahan</span>
             <input type="range" class="logging-slider" id="loggingSlider" min="0" max="100" value="10">
 
-            <!-- New Control for Pattern -->
             <label style="margin-top: 8px;">Pola Penebangan</label>
             <select id="deforestPattern">
                 <option value="random">Acak (Selektif)</option>
@@ -362,20 +374,32 @@
                 Gangguan Alam (Bencana)
                 <span id="naturalVal" class="value-display" style="color:#f59e0b">Jarang</span>
             </label>
-            <span class="sub-label">Kebakaran, Angin Kencang, Longsor (Jarang)</span>
+            <span class="sub-label">Kebakaran, Angin Kencang, Longsor</span>
             <input type="range" class="natural-slider" id="naturalSlider" min="0" max="100" value="0">
+        </div>
 
-            <label style="color: #4ade80; margin-top:10px;">
-                Laju Restorasi (Suksesi)
-                <span id="restoreVal" class="value-display" style="color:#4ade80">Rendah</span>
+        <!-- CONTROL GROUP 2: PEMULIHAN -->
+        <div class="control-group">
+            <div class="control-header">2. Upaya Pemulihan</div>
+
+            <label style="color: #10b981;">
+                Suksesi Alami (Natural)
+                <span id="restoreVal" class="value-display" style="color:#10b981">Rendah</span>
             </label>
-            <span class="sub-label">Kecepatan pemulihan vegetasi alami</span>
+            <span class="sub-label">Kemampuan alam memulihkan diri sendiri</span>
             <input type="range" class="restore-slider" id="restoreSlider" min="0" max="100" value="10">
+
+            <label style="color: #3b82f6; margin-top:10px;">
+                Program Reboisasi (Aktif)
+                <span id="reboisasiVal" class="value-display" style="color:#3b82f6">Nihil</span>
+            </label>
+            <span class="sub-label">Penanaman pohon aktif oleh manusia</span>
+            <input type="range" class="reboisasi-slider" id="reboisasiSlider" min="0" max="100" value="0">
         </div>
         
+        <!-- CONTROL GROUP 3: GEOLOGI & CUACA -->
         <div class="control-group">
-            <label>Faktor Geologi (Tanah)</label>
-            <span class="sub-label">Simulasi daya serap & kejenuhan</span>
+            <div class="control-header">3. Geologi & Cuaca</div>
             
             <div class="soil-controls">
                 <div class="toggle-row">
@@ -389,16 +413,14 @@
                     <option value="sandy">Tanah Berpasir (Poros)</option>
                 </select>
             </div>
-            <!-- Indikator Kejenuhan -->
-            <div style="margin-top:10px;">
-                <label style="font-size:0.7rem; color:#94a3b8;">Rata-rata Kejenuhan Tanah (Saturation)</label>
+            
+            <div style="margin-top:10px; margin-bottom:15px;">
+                <label style="font-size:0.7rem; color:#94a3b8;">Saturasi Tanah (Kejenuhan)</label>
                 <div style="width:100%; height:6px; background:#334155; border-radius:3px; overflow:hidden;">
                     <div id="saturationBar" style="width:0%; height:100%; background:#60a5fa; transition:width 0.2s;"></div>
                 </div>
             </div>
-        </div>
 
-        <div class="control-group">
             <label>
                 Curah Hujan
                 <span id="rainVal" class="value-display" style="color:var(--accent-color)">Gerimis</span>
@@ -445,7 +467,7 @@
             </div>
         </div>
 
-        <!-- NEW: ATTRIBUTION FOOTER -->
+        <!-- ATTRIBUTION FOOTER -->
         <div class="attribution">
             Coding oleh <strong>Gemini AI</strong><br>
             Penyempurnaan dan Prompt oleh <strong>Hanan Dimas Prasetya</strong>
@@ -497,7 +519,7 @@
     // Time System Variables
     let simTimeMinutes = 360; // Start at 06:00
     let dayCount = 1;
-    const BASE_MINS_PER_FRAME = 5; // Base speed: 5 mins per frame (~5 secs per day)
+    const BASE_MINS_PER_FRAME = 5; // Base speed
     let simSpeedMultiplier = 1; // 1x, 2x, 5x
     let isDaytime = true;
     
@@ -507,22 +529,26 @@
 
     // Input Parameters
     let loggingProb = 0.002; 
-    let naturalProb = 0.0; // New: Gangguan Alam
+    let naturalProb = 0.0; 
     let restoreProb = 0.002; 
+    let reboisasiProb = 0.0; // NEW: Reboisasi Aktif
     let rainIntensity = 15; 
     let soilType = 'loam'; 
     let useSoilVar = true;
-    let deforestPattern = 'random'; // 'random' or 'organized'
+    let deforestPattern = 'random'; 
     
     // DOM Elements
     const sliderLogging = document.getElementById('loggingSlider');
     const labelLogging = document.getElementById('loggingVal');
     const sliderNatural = document.getElementById('naturalSlider');
     const labelNatural = document.getElementById('naturalVal');
+    
     const sliderRestore = document.getElementById('restoreSlider');
     const labelRestore = document.getElementById('restoreVal');
-    const selectPattern = document.getElementById('deforestPattern');
+    const sliderReboisasi = document.getElementById('reboisasiSlider'); // NEW
+    const labelReboisasi = document.getElementById('reboisasiVal');     // NEW
 
+    const selectPattern = document.getElementById('deforestPattern');
     const soilSelect = document.getElementById('soilTypeSelect');
     const soilToggle = document.getElementById('soilToggle');
     const saturationBar = document.getElementById('saturationBar');
@@ -547,9 +573,6 @@
     // --- MODAL LOGIC ---
     btnUnderstand.addEventListener('click', () => {
         modal.style.display = 'none';
-        // Auto start simulation if desired, or let user click start
-        // isRunning = true; 
-        // loop();
     });
 
     // --- CHARTING SYSTEM ---
@@ -706,23 +729,18 @@
     }
 
     function updateTimeSystem() {
-        // Apply speed multiplier to time
         simTimeMinutes += BASE_MINS_PER_FRAME * simSpeedMultiplier;
         
-        if (simTimeMinutes >= 1440) { // 24 hours * 60 mins
+        if (simTimeMinutes >= 1440) { 
             simTimeMinutes = 0;
             dayCount++;
         }
 
         const hours = Math.floor(simTimeMinutes / 60);
-        
-        // Define Day/Night (06:00 to 18:00 is Day)
         isDaytime = (hours >= 6 && hours < 18);
     }
 
     function updateEcosystem() {
-        // Adjust activity frequency based on Speed Multiplier
-        // Base checks (40) * Multiplier. If 5x speed, we do 200 checks per frame to keep up with time passing.
         const checksPerFrame = 40 * simSpeedMultiplier; 
         
         let f = 0, d = 0, n = 0, t = 0;
@@ -747,7 +765,7 @@
                 if (cell.type === TYPE_FOREST) {
                     dryingRate = 0.003 * evapFactor; 
                 } else if (cell.type === TYPE_DEFOREST) {
-                    // FISIKA BARU: Efek Tepi Hutan
+                    // Efek Tepi Hutan
                     let forestNeighbors = 0;
                     if (x > 0 && grid[y][x-1].type === TYPE_FOREST) forestNeighbors++;
                     if (x < COLS-1 && grid[y][x+1].type === TYPE_FOREST) forestNeighbors++;
@@ -757,11 +775,10 @@
                     if (forestNeighbors > 0) {
                         dryingRate = 0.0015 * evapFactor; // Kering agak cepat
                     } else {
-                        dryingRate = 0.0005 * evapFactor; // Kering lambat (genangan)
+                        dryingRate = 0.0005 * evapFactor; // Kering lambat
                     }
                 }
                 
-                // Scale drying with simulation speed so physics matches time
                 dryingRate *= simSpeedMultiplier;
 
                 cell.saturation -= dryingRate;
@@ -774,7 +791,7 @@
         // --- DYNAMICS LOOP ---
         for (let i = 0; i < checksPerFrame; i++) {
             
-            // 1. GANGGUAN ALAM (Dikurangi Drastis)
+            // 1. GANGGUAN ALAM
             if (Math.random() < naturalProb) {
                 const rx = Math.floor(Math.random() * COLS);
                 const ry = Math.floor(Math.random() * (ROWS - 5));
@@ -784,7 +801,7 @@
                 }
             }
 
-            // 2. LOGGING (Aktivitas Manusia)
+            // 2. LOGGING
             if (deforestPattern === 'random') {
                 const rx = Math.floor(Math.random() * COLS);
                 const ry = Math.floor(Math.random() * (ROWS - 5));
@@ -794,7 +811,6 @@
                     if (Math.random() < loggingProb) cell.type = TYPE_DEFOREST;
                 }
             } else {
-                // POLA SISTEMATIS
                 const ry = Math.floor(Math.random() * (ROWS - 5));
                 for (let cx = COLS - 1; cx >= 0; cx--) {
                     const cell = grid[ry][cx];
@@ -807,13 +823,19 @@
                 }
             }
 
-            // 3. RESTORASI
+            // 3. PEMULIHAN (Natural & Reboisasi)
             const rxRestore = Math.floor(Math.random() * COLS);
             const ryRestore = Math.floor(Math.random() * (ROWS - 5));
             const cellRestore = grid[ryRestore][rxRestore];
             
             if (cellRestore.type === TYPE_DEFOREST) {
+                // Cek Natural Succession
                 if (Math.random() < restoreProb) {
+                    cellRestore.type = TYPE_FOREST;
+                    cellRestore.isRestoring = true;
+                } 
+                // Cek Reboisasi (Active Planting)
+                else if (Math.random() < reboisasiProb) {
                     cellRestore.type = TYPE_FOREST;
                     cellRestore.isRestoring = true;
                 }
@@ -834,11 +856,11 @@
         }
 
         update() {
-            this.y += this.speed; // Rain visual speed stays constant for stability
+            this.y += this.speed; 
 
             if (this.y >= ROWS - 5) {
                 this.active = false;
-                floodLevel += 5; 
+                floodLevel += 10;
                 return;
             }
 
@@ -881,7 +903,7 @@
                 if (Math.random() < absorbChance) {
                     this.active = false;
                     let saturationGain = 0.05; 
-                    if (cell.type === TYPE_DEFOREST) saturationGain = 0.15; 
+                    if (cell.type === TYPE_DEFOREST) saturationGain = 0.2; 
                     
                     cell.saturation += saturationGain;
                     if (cell.saturation > 1.0) cell.saturation = 1.0;
@@ -932,17 +954,13 @@
             else p.draw();
         }
 
-        // Night Overlay
         if (!isDaytime) {
-            ctx.fillStyle = 'rgba(2, 6, 23, 0.5)'; // Efek Malam
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.5)'; 
             ctx.fillRect(0, 0, WIDTH, HEIGHT);
         }
         
         if (floodLevel > 0) {
-            let drainRate = 5 + (floodLevel * 0.05); 
-            // Scale drain rate with sim speed (if time passes faster, water drains faster)
-            drainRate *= simSpeedMultiplier; 
-            
+            let drainRate = 2.0 + (floodLevel * 0.01); 
             floodLevel -= drainRate; 
             if (floodLevel < 0) floodLevel = 0;
         }
@@ -1023,16 +1041,15 @@
 
     function getLabel(val, type) {
         if (val == 0) return "Nihil";
-        if (val < 20) return "Jarang"; // Changed
+        if (val < 20) return "Jarang"; 
         if (val < 50) return "Sedang";
         if (val < 80) return "Sering";
         return "Ekstrem";
     }
     
-    // Label khusus untuk penebangan/restorasi (kecepatan)
     function getSpeedLabel(val) {
         if (val == 0) return "Nihil";
-        if (val < 20) return "Sangat Lambat";
+        if (val < 20) return "Lambat";
         if (val < 50) return "Sedang";
         if (val < 80) return "Cepat";
         return "Ekstrem";
@@ -1046,7 +1063,6 @@
 
     sliderNatural.addEventListener('input', (e) => {
         const val = parseInt(e.target.value);
-        // FIX: Probabilitas jauh lebih kecil agar "Jarang"
         naturalProb = val === 0 ? 0 : (val / 100000); 
         labelNatural.innerText = getLabel(val);
     });
@@ -1055,6 +1071,13 @@
         const val = parseInt(e.target.value);
         restoreProb = val === 0 ? 0 : (val / 2000); 
         labelRestore.innerText = getSpeedLabel(val);
+    });
+
+    // NEW: Reboisasi Event Listener
+    sliderReboisasi.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        reboisasiProb = val === 0 ? 0 : (val / 1000); // Lebih cepat dari natural
+        labelReboisasi.innerText = getSpeedLabel(val);
     });
 
     sliderRain.addEventListener('input', (e) => {
@@ -1079,11 +1102,8 @@
         soilSelect.disabled = !useSoilVar; 
     });
 
-    // Speed Control Function
     function setSimSpeed(speed, btn) {
         simSpeedMultiplier = speed;
-        
-        // Update UI Active State
         document.querySelectorAll('.btn-speed').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
     }

@@ -28,6 +28,63 @@
             height: 100vh;
             display: flex;
             overflow: hidden;
+            position: relative; /* For overlay positioning */
+        }
+
+        /* FLOOD WARNING OVERLAY */
+        #floodWarningOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows clicking through */
+            z-index: 9999;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #floodWarningOverlay.active {
+            opacity: 1;
+            animation: pulse-alarm 1s infinite;
+        }
+
+        @keyframes pulse-alarm {
+            0% { 
+                box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0);
+                border: 0px solid transparent;
+            }
+            50% { 
+                box-shadow: inset 0 0 100px 20px rgba(239, 68, 68, 0.6); 
+                border: 8px solid #ef4444;
+            }
+            100% { 
+                box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0);
+                border: 0px solid transparent;
+            }
+        }
+
+        /* WARNING BANNER */
+        .warning-banner {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ef4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            z-index: 10000;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { top: -50px; }
+            to { top: 20px; }
         }
 
         .container {
@@ -371,10 +428,14 @@
 </head>
 <body>
 
+<!-- FLOOD WARNING OVERLAYS -->
+<div id="floodWarningOverlay"></div>
+<div id="floodWarningBanner" class="warning-banner">⚠️ BAHAYA BANJIR KRITIS!</div>
+
 <!-- MODAL DISCLAIMER -->
 <div id="introModal" class="modal">
     <div class="modal-content">
-        <h2>ℹ️ PERHATIAN</h2>
+        <h2>ℹ️ PERINGATAN</h2>
         <p>
             Simulasi ini adalah <strong>model penyederhanaan</strong> (abstraksi) untuk tujuan pendidikan semata. Perilaku hidrologi, ekosistem, dan cuaca di dunia nyata jauh lebih kompleks dan dipengaruhi oleh ribuan variabel lain yang tidak tercakup di sini.
         </p>
@@ -619,6 +680,10 @@
     const weatherIcon = document.getElementById('weatherIcon');
     const evapoStatus = document.getElementById('evapoStatus');
 
+    // Warning UI
+    const floodOverlay = document.getElementById('floodWarningOverlay');
+    const floodBanner = document.getElementById('floodWarningBanner');
+
     // Modal UI
     const modal = document.getElementById('introModal');
     const btnUnderstand = document.getElementById('btnUnderstand');
@@ -782,6 +847,7 @@
     }
 
     function updateTimeSystem() {
+        // Apply speed multiplier to time
         simTimeMinutes += BASE_MINS_PER_FRAME * simSpeedMultiplier;
         
         if (simTimeMinutes >= 1440) { 
@@ -1007,13 +1073,17 @@
             else p.draw();
         }
 
+        // Night Overlay
         if (!isDaytime) {
-            ctx.fillStyle = 'rgba(2, 6, 23, 0.5)'; 
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.5)'; // Efek Malam
             ctx.fillRect(0, 0, WIDTH, HEIGHT);
         }
         
+        // FIXED DRAINAGE LOGIC
         if (floodLevel > 0) {
+            // Decoupled drain rate from simSpeedMultiplier
             let drainRate = 2.0 + (floodLevel * 0.01); 
+            
             floodLevel -= drainRate; 
             if (floodLevel < 0) floodLevel = 0;
         }
@@ -1067,8 +1137,16 @@
         if (val > 1000) {
             textFlood.style.color = '#ef4444';
             textFlood.innerText += " (!)";
+            
+            // Activate Warning Overlay
+            floodOverlay.classList.add('active');
+            floodBanner.style.display = 'block';
         } else {
             textFlood.style.color = '#3b82f6';
+            
+            // Deactivate Warning Overlay
+            floodOverlay.classList.remove('active');
+            floodBanner.style.display = 'none';
         }
         const cover = Math.round((stats.forest / stats.total) * 100);
         textForest.innerText = cover + "%";

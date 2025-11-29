@@ -313,6 +313,59 @@
             width: 100%;
         }
         .modal-btn:hover { background-color: #2563eb; }
+
+        /* RESPONSIVE DESIGN FOR MOBILE */
+        @media (max-width: 768px) {
+            body {
+                overflow: auto; /* Enable scroll on body for mobile */
+                height: auto;
+            }
+
+            .container {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+            }
+
+            /* Main View (Canvas) First */
+            .main-view {
+                order: 1;
+                height: auto;
+                min-height: 350px;
+                padding: 10px;
+                position: sticky;
+                top: 0;
+                z-index: 20; /* Keep canvas on top while scrolling controls */
+            }
+
+            /* Sidebar (Controls) Second */
+            .sidebar {
+                order: 2;
+                width: 100%;
+                border-right: none;
+                border-top: 1px solid #334155;
+                height: auto;
+                overflow: visible;
+                box-shadow: none;
+            }
+
+            /* Scale Canvas */
+            canvas#simCanvas {
+                width: 100% !important;
+                height: auto !important;
+                max-height: 50vh;
+                object-fit: contain;
+            }
+
+            h1 { font-size: 1.2rem; }
+            h2 { font-size: 0.9rem; }
+            
+            .modal-content {
+                width: 85%;
+                padding: 20px;
+                margin: 20px;
+            }
+        }
         
     </style>
 </head>
@@ -321,7 +374,7 @@
 <!-- MODAL DISCLAIMER -->
 <div id="introModal" class="modal">
     <div class="modal-content">
-        <h2>ℹ️ Perhatian</h2>
+        <h2>ℹ️ PERHATIAN</h2>
         <p>
             Simulasi ini adalah <strong>model penyederhanaan</strong> (abstraksi) untuk tujuan pendidikan semata. Perilaku hidrologi, ekosistem, dan cuaca di dunia nyata jauh lebih kompleks dan dipengaruhi oleh ribuan variabel lain yang tidak tercakup di sini.
         </p>

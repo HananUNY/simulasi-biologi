@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="favicon.png">
     <title>Simulasi Dinamika Hutan & Banjir</title>
     <style>
         :root {
@@ -29,65 +28,9 @@
             height: 100vh;
             display: flex;
             overflow: hidden;
-            position: relative; /* For overlay positioning */
         }
 
-        /* FLOOD WARNING OVERLAY */
-        #floodWarningOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* Allows clicking through */
-            z-index: 9999;
-            box-sizing: border-box;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        #floodWarningOverlay.active {
-            opacity: 1;
-            animation: pulse-alarm 1s infinite;
-        }
-
-        @keyframes pulse-alarm {
-            0% { 
-                box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0);
-                border: 0px solid transparent;
-            }
-            50% { 
-                box-shadow: inset 0 0 100px 20px rgba(239, 68, 68, 0.6); 
-                border: 8px solid #ef4444;
-            }
-            100% { 
-                box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0);
-                border: 0px solid transparent;
-            }
-        }
-
-        /* WARNING BANNER */
-        .warning-banner {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #ef4444;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            z-index: 10000;
-            display: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            animation: slideDown 0.3s ease-out;
-        }
-        @keyframes slideDown {
-            from { top: -50px; }
-            to { top: 20px; }
-        }
-
+        /* --- LAYOUT UTAMA --- */
         .container {
             display: grid;
             grid-template-columns: 360px 1fr;
@@ -110,6 +53,7 @@
         h1 { font-size: 1.1rem; margin-bottom: 2px; color: var(--accent-color); }
         h2 { font-size: 0.8rem; font-weight: normal; margin-bottom: 15px; color: #94a3b8; }
 
+        /* --- WIDGET WAKTU --- */
         .time-widget {
             background: rgba(0,0,0,0.3);
             padding: 10px;
@@ -133,7 +77,6 @@
             margin-bottom: 5px;
         }
         
-        /* Speed Control Buttons */
         .speed-controls {
             display: flex;
             justify-content: center;
@@ -160,6 +103,27 @@
             font-weight: bold;
         }
 
+        /* --- PRESET BUTTONS --- */
+        .preset-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-preset {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #475569;
+            background: rgba(255,255,255,0.05);
+            color: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .btn-preset:hover { background: rgba(255,255,255,0.1); border-color: var(--accent-color); }
+        .btn-preset.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+
+        /* --- KONTROL INPUT --- */
         .control-group {
             margin-bottom: 15px;
             background: rgba(255,255,255,0.05);
@@ -181,8 +145,8 @@
         .sub-label { font-size: 0.7rem; color: #94a3b8; margin-bottom: 5px; display: block; line-height: 1.2; }
         
         input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--accent-color); height: 6px; }
-        input[type="range"].restore-slider { accent-color: #10b981; } /* Emerald */
-        input[type="range"].reboisasi-slider { accent-color: #3b82f6; } /* Blue */
+        input[type="range"].restore-slider { accent-color: #10b981; } 
+        input[type="range"].reboisasi-slider { accent-color: #3b82f6; }
         input[type="range"].logging-slider { accent-color: var(--danger-color); }
         input[type="range"].natural-slider { accent-color: #f59e0b; }
 
@@ -244,6 +208,7 @@
         .btn-primary { background-color: var(--accent-color); color: white; }
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-outline { background-color: transparent; border: 1px solid #475569; color: #cbd5e1; }
+        .btn-info { background-color: #0ea5e9; color: white; margin-bottom: 15px; }
 
         .stats-panel {
             margin-top: auto;
@@ -317,10 +282,57 @@
             color: #94a3b8;
         }
 
-        /* MODAL STYLES */
+        /* --- VISUAL EFFECTS (OVERLAYS & MODALS) --- */
+        
+        /* Flood Warning Overlay (Border) */
+        #floodWarningOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #floodWarningOverlay.active {
+            opacity: 1;
+            animation: pulse-alarm 1s infinite;
+        }
+        @keyframes pulse-alarm {
+            0% { box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0); border: 0px solid transparent; }
+            50% { box-shadow: inset 0 0 100px 20px rgba(239, 68, 68, 0.6); border: 8px solid #ef4444; }
+            100% { box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0); border: 0px solid transparent; }
+        }
+
+        /* Warning Banner Text */
+        .warning-banner {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ef4444;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            z-index: 10000;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { top: -50px; }
+            to { top: 20px; }
+        }
+
+        /* Modal Styles */
         .modal {
             position: fixed;
-            z-index: 1000;
+            z-index: 2000;
             left: 0;
             top: 0;
             width: 100%;
@@ -342,22 +354,55 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             text-align: center;
             animation: fadeIn 0.3s ease-out;
+            position: relative;
         }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: white; }
+        
+        .modal-content img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #475569;
+        }
+        
+        /* Tabs for Modal */
+        .modal-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #334155;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
-        .modal h2 {
-            color: var(--accent-color);
-            margin-top: 0;
-            font-size: 1.4rem;
-        }
-        .modal p {
-            color: #cbd5e1;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 25px;
-        }
+        .modal h2 { color: var(--accent-color); margin-top: 0; font-size: 1.4rem; }
+        .modal p { color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 25px; }
         .modal-btn {
             background-color: var(--accent-color);
             color: white;
@@ -372,57 +417,15 @@
         }
         .modal-btn:hover { background-color: #2563eb; }
 
-        /* RESPONSIVE DESIGN FOR MOBILE */
+        /* RESPONSIVE */
         @media (max-width: 768px) {
-            body {
-                overflow: auto; /* Enable scroll on body for mobile */
-                height: auto;
-            }
-
-            .container {
-                display: flex;
-                flex-direction: column;
-                height: auto;
-            }
-
-            /* Main View (Canvas) First */
-            .main-view {
-                order: 1;
-                height: auto;
-                min-height: 350px;
-                padding: 10px;
-                position: sticky;
-                top: 0;
-                z-index: 20; /* Keep canvas on top while scrolling controls */
-            }
-
-            /* Sidebar (Controls) Second */
-            .sidebar {
-                order: 2;
-                width: 100%;
-                border-right: none;
-                border-top: 1px solid #334155;
-                height: auto;
-                overflow: visible;
-                box-shadow: none;
-            }
-
-            /* Scale Canvas */
-            canvas#simCanvas {
-                width: 100% !important;
-                height: auto !important;
-                max-height: 50vh;
-                object-fit: contain;
-            }
-
+            body { overflow: auto; height: auto; }
+            .container { display: flex; flex-direction: column; height: auto; }
+            .main-view { order: 1; height: auto; min-height: 350px; padding: 10px; position: sticky; top: 0; z-index: 20; }
+            .sidebar { order: 2; width: 100%; border-right: none; border-top: 1px solid #334155; height: auto; overflow: visible; box-shadow: none; }
+            canvas#simCanvas { width: 100% !important; height: auto !important; max-height: 50vh; object-fit: contain; }
             h1 { font-size: 1.2rem; }
-            h2 { font-size: 0.9rem; }
-            
-            .modal-content {
-                width: 85%;
-                padding: 20px;
-                margin: 20px;
-            }
+            .modal-content { width: 85%; padding: 20px; margin: 20px; }
         }
         
     </style>
@@ -433,10 +436,10 @@
 <div id="floodWarningOverlay"></div>
 <div id="floodWarningBanner" class="warning-banner">⚠️ BAHAYA BANJIR KRITIS!</div>
 
-<!-- MODAL DISCLAIMER -->
+<!-- INTRO DISCLAIMER MODAL -->
 <div id="introModal" class="modal">
     <div class="modal-content">
-        <h2>ℹ️ PERINGATAN</h2>
+        <h2>ℹ️ Penafian & Tujuan Edukasi</h2>
         <p>
             Simulasi ini adalah <strong>model penyederhanaan</strong> (abstraksi) untuk tujuan pendidikan semata. Perilaku hidrologi, ekosistem, dan cuaca di dunia nyata jauh lebih kompleks dan dipengaruhi oleh ribuan variabel lain yang tidak tercakup di sini.
         </p>
@@ -444,6 +447,48 @@
             Visualisasi ini bertujuan memberikan gambaran logis tentang hubungan sebab-akibat antara tutupan lahan, jenis tanah, dan risiko banjir berdasarkan parameter yang Anda atur.
         </p>
         <button id="btnUnderstand" class="modal-btn">Saya Paham & Lanjutkan</button>
+    </div>
+</div>
+
+<!-- DATA SATELIT MODAL (DUAL TABS) -->
+<div id="dataModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeDataModal()">&times;</span>
+        <h2>🌏 Data Satelit Deforestasi</h2>
+        
+        <!-- TABS -->
+        <div class="modal-tabs">
+            <button class="tab-btn active" onclick="switchTab('sumatra')">Sumatera</button>
+            <button class="tab-btn" onclick="switchTab('kalimantan')">Kalimantan</button>
+        </div>
+
+        <!-- CONTENT: SUMATRA -->
+        <div id="tab-sumatra" class="tab-content active">
+            <p style="margin-bottom: 10px; font-size: 0.85rem; color: #94a3b8;">
+                Evolusi Penutupan Lahan (1990 - 2020)
+            </p>
+            <!-- GANTI LINK IMAGE INI -->
+            <img src="https://placehold.co/600x400/1e293b/white?text=GIF+Data+Sumatera" alt="Animasi Deforestasi Sumatera">
+            <p style="text-align: justify; font-size: 0.9rem;">
+                <strong>Analisis Sumatera:</strong> Pulau Sumatera telah kehilangan lebih dari 50% hutan alaminya sejak 1985. Konversi menjadi perkebunan sawit dan pulp wood menjadi faktor utama, meningkatkan risiko banjir di provinsi Riau dan Jambi.
+            </p>
+        </div>
+
+        <!-- CONTENT: KALIMANTAN -->
+        <div id="tab-kalimantan" class="tab-content">
+            <p style="margin-bottom: 10px; font-size: 0.85rem; color: #94a3b8;">
+                Evolusi Penutupan Lahan (1990 - 2020)
+            </p>
+            <!-- GANTI LINK IMAGE INI -->
+            <img src="https://placehold.co/600x400/1e293b/white?text=GIF+Data+Kalimantan" alt="Animasi Deforestasi Kalimantan">
+            <p style="text-align: justify; font-size: 0.9rem;">
+                <strong>Analisis Kalimantan:</strong> Dikenal sebagai paru-paru dunia, Kalimantan mengalami laju deforestasi yang cepat di bagian pesisir dan tengah. Hilangnya tutupan hutan di hulu sungai Mahakam dan Barito berdampak langsung pada banjir musiman yang kian parah.
+            </p>
+        </div>
+
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: 15px;">
+            Sumber Data: MapBiomas Indonesia / Analisis Citra Satelit
+        </p>
     </div>
 </div>
 
@@ -466,6 +511,20 @@
                 <button class="btn-speed" id="spd2" onclick="setSimSpeed(2, this)">2x</button>
                 <button class="btn-speed" id="spd5" onclick="setSimSpeed(5, this)">5x</button>
             </div>
+        </div>
+
+        <button id="btnShowRealData" class="btn-speed btn-info" style="width: 100%; padding: 10px; border: none; background-color: #0ea5e9; color: white; font-weight: bold; margin-bottom: 20px;">
+            🌏 Lihat Data Real (Sumatera/Kalimantan)
+        </button>
+
+        <!-- CONTROL GROUP 0: PRESET SKENARIO -->
+        <div class="control-group" style="background: rgba(255, 255, 255, 0.1);">
+            <div class="control-header" style="color: #fbbf24;">0. Preset Skenario</div>
+            <div class="preset-group">
+                <button class="btn-preset" onclick="applyPreset('1990')">Kondisi 1990</button>
+                <button class="btn-preset" onclick="applyPreset('2024')">Kondisi 2024</button>
+            </div>
+            <span class="sub-label" style="text-align: center;">Klik untuk memuat ulang peta & parameter</span>
         </div>
 
         <!-- CONTROL GROUP 1: DEGRADASI -->
@@ -646,11 +705,12 @@
     let loggingProb = 0.002; 
     let naturalProb = 0.0; 
     let restoreProb = 0.002; 
-    let reboisasiProb = 0.0; // NEW: Reboisasi Aktif
+    let reboisasiProb = 0.0; 
     let rainIntensity = 15; 
     let soilType = 'loam'; 
     let useSoilVar = true;
     let deforestPattern = 'random'; 
+    let initialDeforestPercent = 0.0; // 0.0 - 1.0 (Percentage of forest initially cut)
     
     // DOM Elements
     const sliderLogging = document.getElementById('loggingSlider');
@@ -660,8 +720,8 @@
     
     const sliderRestore = document.getElementById('restoreSlider');
     const labelRestore = document.getElementById('restoreVal');
-    const sliderReboisasi = document.getElementById('reboisasiSlider'); // NEW
-    const labelReboisasi = document.getElementById('reboisasiVal');     // NEW
+    const sliderReboisasi = document.getElementById('reboisasiSlider'); 
+    const labelReboisasi = document.getElementById('reboisasiVal');     
 
     const selectPattern = document.getElementById('deforestPattern');
     const soilSelect = document.getElementById('soilTypeSelect');
@@ -686,13 +746,71 @@
     const floodBanner = document.getElementById('floodWarningBanner');
 
     // Modal UI
-    const modal = document.getElementById('introModal');
+    const introModal = document.getElementById('introModal');
+    const dataModal = document.getElementById('dataModal');
     const btnUnderstand = document.getElementById('btnUnderstand');
+    const btnShowRealData = document.getElementById('btnShowRealData');
 
-    // --- MODAL LOGIC ---
+    // --- MODAL & TABS LOGIC ---
     btnUnderstand.addEventListener('click', () => {
-        modal.style.display = 'none';
+        introModal.style.display = 'none';
     });
+
+    btnShowRealData.addEventListener('click', () => {
+        dataModal.style.display = 'flex';
+    });
+
+    window.closeDataModal = function() {
+        dataModal.style.display = 'none';
+    }
+
+    window.switchTab = function(island) {
+        // Reset Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        // Activate Selected
+        if(island === 'sumatra') {
+            document.querySelector("button[onclick=\"switchTab('sumatra')\"]").classList.add('active');
+            document.getElementById('tab-sumatra').classList.add('active');
+        } else {
+            document.querySelector("button[onclick=\"switchTab('kalimantan')\"]").classList.add('active');
+            document.getElementById('tab-kalimantan').classList.add('active');
+        }
+    }
+
+    // --- PRESET LOGIC ---
+    window.applyPreset = function(year) {
+        // Reset everything first
+        isRunning = false;
+        cancelAnimationFrame(animationId);
+        btnStart.innerText = "Mulai Simulasi";
+        btnStart.classList.replace('btn-danger', 'btn-primary');
+
+        if (year === '1990') {
+            // Setting 1990: Hutan Lebat, Deforestasi Lambat
+            initialDeforestPercent = 0.05; // 5% rusak di awal
+            
+            // Slider UI update
+            sliderLogging.value = 5; loggingProb = 5/1000; labelLogging.innerText = "Sangat Lambat";
+            sliderRestore.value = 20; restoreProb = 20/2000; labelRestore.innerText = "Sedang";
+            sliderReboisasi.value = 0; reboisasiProb = 0; labelReboisasi.innerText = "Nihil";
+            sliderRain.value = 15; rainIntensity = 15; labelRain.innerText = "Gerimis";
+            
+        } else if (year === '2024') {
+            // Setting 2024: Hutan Kritis, Deforestasi Cepat, Hujan Ekstrem (Perubahan Iklim)
+            initialDeforestPercent = 0.45; // 45% rusak di awal
+            
+            // Slider UI update
+            sliderLogging.value = 40; loggingProb = 40/1000; labelLogging.innerText = "Cepat";
+            sliderRestore.value = 5; restoreProb = 5/2000; labelRestore.innerText = "Sangat Lambat";
+            sliderReboisasi.value = 5; reboisasiProb = 5/1000; labelReboisasi.innerText = "Sangat Lambat";
+            sliderRain.value = 40; rainIntensity = 40; labelRain.innerText = "Normal";
+        }
+
+        // Apply to Grid
+        initGrid();
+    }
 
     // --- CHARTING SYSTEM ---
     const floodCanvas = document.getElementById('floodChart');
@@ -827,8 +945,19 @@
                     type = TYPE_VILLAGE;
                 } else {
                     const rnd = Math.random();
-                    if (rnd < 0.15) type = TYPE_NATURAL;
-                    else type = TYPE_FOREST; 
+                    // Generate Map based on Presets / Probability
+                    // 15% always Natural (Rocks/River banks)
+                    if (rnd < 0.15) {
+                        type = TYPE_NATURAL;
+                    } 
+                    // Initial Deforestation based on preset
+                    else if (rnd < 0.15 + initialDeforestPercent) {
+                        type = TYPE_DEFOREST;
+                    } 
+                    // The rest is Forest
+                    else {
+                        type = TYPE_FOREST; 
+                    }
                 }
                 row.push(new Cell(x, y, type));
             }

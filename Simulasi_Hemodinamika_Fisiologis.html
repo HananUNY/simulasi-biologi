@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Hemodinamika Fisiologis (Moodle Embed Version)</title>
+    <!-- Tailwind CSS via CDN (Pastikan akses internet tersedia) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fallback font system jika Google Fonts gagal dimuat di intranet */
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+            overflow: hidden;
+            user-select: none;
+            /* Moodle Specific: Mencegah scroll ganda di dalam iframe */
+            margin: 0;
+            padding: 0;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            /* Penting untuk canvas resolusi tinggi di layar retina */
+            image-rendering: -webkit-optimize-contrast; 
+        }
+
+        /* Custom Scrollbar agar rapi di iframe kecil */
+        .control-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .control-panel::-webkit-scrollbar-thumb {
+            background-color: #334155;
+            border-radius: 4px;
+        }
+
+        .alert-box {
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Toggle Switch Styling */
+        .switch-checkbox {
+            appearance: none;
+            width: 40px;
+            height: 20px;
+            background: #334155;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            transition: background 0.3s;
+        }
+        .switch-checkbox::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .switch-checkbox:checked {
+            background: #10b981; /* Emerald 500 */
+        }
+        .switch-checkbox:checked::after {
+            left: 22px;
+        }
+        .switch-checkbox.danger-switch:checked {
+            background: #ef4444; /* Red 500 */
+        }
+
+        /* Tooltip Fixed Position agar tidak terpotong Iframe */
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            background: #1e293b;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            z-index: 100;
+            border: 1px solid #475569;
+            width: 220px;
+            line-height: 1.4;
+            bottom: 110%; 
+            left: 0;
+            margin-bottom: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: normal;
+        }
+        .has-tooltip {
+            position: relative;
+        }
+        .has-tooltip:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .graph-btn {
+            padding: 4px 12px;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            background: #1e293b;
+            color: #94a3b8;
+            cursor: pointer;
+            border: 1px solid #334155;
+            transition: all 0.2s;
+        }
+        .graph-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #60a5fa;
+        }
+        .graph-btn:hover:not(.active) {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col min-h-[600px]">
+
+    <!-- Top: Simulation View -->
+    <div class="relative flex-grow bg-slate-900 border-b border-slate-700" style="flex-basis: 45%;">
+        <!-- Labels -->
+        <div class="absolute top-4 left-4 z-10 space-y-2 pointer-events-none">
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <span class="text-xs text-slate-400">Arteri (O2 Tinggi)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span class="text-xs text-slate-400">Vena (O2 Rendah)</span>
+            </div>
+        </div>
+        
+        <!-- Warning Overlays -->
+        <div class="absolute top-2 left-0 w-full flex flex-col items-center space-y-2 z-20 pointer-events-none">
+            <div id="warning-artery" class="hidden bg-red-900/90 text-red-100 px-4 py-2 rounded border border-red-500 text-xs font-bold alert-box shadow-lg backdrop-blur-sm">
+                ⚠️ RISIKO PECAH PEMBULUH (Hipertensi)
+            </div>
+            <div id="warning-plaque" class="hidden bg-orange-900/90 text-orange-100 px-4 py-2 rounded border border-orange-500 text-xs font-bold shadow-lg backdrop-blur-sm">
+                ⚠️ ALIRAN TURBULEN (Risiko Trombus)
+            </div>
+        </div>
+
+        <canvas id="simCanvas"></canvas>
+        
+        <!-- Zoom Lens Canvas Overlay -->
+        <canvas id="zoomCanvas" class="hidden absolute top-4 right-4 rounded-full border-2 border-blue-400 shadow-2xl w-48 h-48 bg-slate-900 z-30"></canvas>
+        <div id="zoom-label" class="hidden absolute top-[200px] right-12 text-xs text-blue-400 font-bold z-30 pointer-events-none">🔍 MIKROSKOP VENA</div>
+    </div>
+
+    <!-- Middle: Graphs -->
+    <div class="relative bg-slate-800 border-b border-slate-700 p-2 flex space-x-4" style="flex-basis: 30%; min-height: 180px;">
+        <div class="flex flex-col w-full h-full relative">
+            <!-- Graph Controls -->
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="text-xs text-slate-400 font-bold">GRAFIK HEMODINAMIKA</h3>
+                <div class="flex space-x-2" id="graph-controls">
+                    <button class="graph-btn active" onclick="setGraphMode('spatial')">Global (Statis)</button>
+                    <button class="graph-btn" onclick="setGraphMode('artery')">Arteri (Live)</button>
+                    <button class="graph-btn" onclick="setGraphMode('vein')">Vena (Live)</button>
+                </div>
+            </div>
+            
+            <canvas id="graphCanvas"></canvas>
+            
+            <!-- Dynamic X-Axis Labels -->
+            <div id="xlabel-spatial" class="absolute bottom-1 left-0 w-full flex text-[10px] text-slate-500 font-mono px-12 pointer-events-none">
+                <span style="width: 35%; text-align: center;">Jantung &rarr; Arteri</span>
+                <span style="width: 30%; text-align: center;">Kapiler</span>
+                <span style="width: 35%; text-align: center;">Vena &rarr; Jantung</span>
+            </div>
+             <div id="xlabel-time" class="hidden absolute bottom-1 left-0 w-full flex text-[10px] text-slate-500 font-mono px-4 justify-center pointer-events-none">
+                <span>Waktu (Detik) &rarr;</span>
+            </div>
+        </div>
+        
+        <!-- Live Stats Box -->
+        <div class="w-56 bg-slate-900 rounded p-3 flex flex-col justify-center space-y-2 text-xs border border-slate-700 shrink-0">
+            <div class="border-b border-slate-700 pb-1 mb-1 font-bold text-slate-300">SENSOR DATA</div>
+            <div class="flex justify-between">
+                <span class="text-red-400">Tekanan Arteri:</span>
+                <span id="stat-bp" class="font-bold text-white">120/80</span>
+            </div>
+             <div class="flex justify-between">
+                <span class="text-blue-400">Tekanan Vena:</span>
+                <span id="stat-vp" class="font-bold text-white">10</span>
+            </div>
+            <div class="flex justify-between mt-2 pt-2 border-t border-slate-800">
+                <span class="text-slate-400">Total Resistensi:</span>
+                <span id="stat-res" class="font-bold text-yellow-400">Normal</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom: Control Panel -->
+    <div class="bg-slate-900 p-4 grid grid-cols-1 md:grid-cols-3 gap-6 control-panel overflow-y-auto" style="flex-basis: 25%;">
+        
+        <!-- Group 1: Heart & Zoom -->
+        <div class="space-y-4 border-r border-slate-700 pr-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-pink-400">JANTUNG</h3>
+                <span id="bpm-display" class="text-xs bg-slate-800 px-2 py-1 rounded">70 BPM</span>
+            </div>
+            <div class="has-tooltip">
+                 <div class="tooltip">Frekuensi detak jantung. Mengubah frekuensi gelombang tekanan.</div>
+                <label class="text-xs text-slate-400">Heart Rate</label>
+                <input type="range" id="slider-bpm" min="40" max="180" value="70" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500">
+            </div>
+            <div class="flex items-center justify-between bg-slate-800 p-2 rounded">
+                <span class="text-xs text-blue-300">🔍 Zoom Vena</span>
+                <input type="checkbox" id="toggle-zoom" class="switch-checkbox">
+            </div>
+        </div>
+
+        <!-- Group 2: Artery Pathology -->
+        <div class="space-y-4 border-r border-slate-700 pr-4">
+            <h3 class="text-sm font-bold text-red-400">ARTERI & PLAK</h3>
+            <div class="has-tooltip">
+                <div class="tooltip">Penumpukan lemak meningkatkan resistensi, menyebabkan Jantung memompa lebih kuat (Hipertensi) dan aliran menjadi cepat di celah sempit (Efek Bernoulli).</div>
+                <div class="flex justify-between">
+                    <label class="text-xs text-slate-400">Level Lemak (Plak)</label>
+                    <span id="plaque-display" class="text-xs text-yellow-500">0%</span>
+                </div>
+                <input type="range" id="slider-plaque" min="0" max="85" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500">
+            </div>
+            <div class="flex items-center justify-between has-tooltip mt-2">
+                <div class="tooltip">Elastisitas pembuluh darah. Jika kaku (Arteriosklerosis), tekanan sistolik akan melonjak tajam.</div>
+                <span class="text-xs text-slate-400">Kekakuan Dinding</span>
+                <input type="checkbox" id="toggle-stiffness" class="switch-checkbox danger-switch">
+            </div>
+        </div>
+
+        <!-- Group 3: Vein -->
+        <div class="space-y-4">
+            <h3 class="text-sm font-bold text-blue-400">VENA (Katup)</h3>
+            <div class="flex items-center justify-between has-tooltip">
+                <div class="tooltip">Katup mencegah darah kembali ke kaki karena gravitasi. Jika rusak, terjadi Backflow (Reflux) yang menyebabkan Varises.</div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold">Fungsi Katup</span>
+                    <span class="text-[10px] text-slate-500">Cegah Backflow</span>
+                </div>
+                <input type="checkbox" id="toggle-valves" class="switch-checkbox" checked>
+            </div>
+            <p class="text-[10px] text-slate-500 italic">Tips: Nyalakan Zoom dan matikan Katup untuk melihat efeknya.</p>
+        </div>
+
+    </div>
+
+<script>
+/**
+ * SIMULASI HEMODINAMIKA FISIOLOGIS
+ * Engine: HTML5 Canvas + JS Physics
+ * Version: 6.2 (Moodle/LMS Embed Friendly)
+ */
+
+// --- CONFIG & STATE ---
+const config = {
+    particleCount: 300, // Reduced slightly for performance on older school PCs
+    zones: { arteryEnd: 0.35, capillaryEnd: 0.65 }
+};
+
+const state = {
+    bpm: 70,
+    isStiff: false,
+    hasValves: true,
+    plaqueLevel: 0, 
+    isZoomed: false,
+    graphMode: 'spatial', // 'spatial', 'artery', 'vein'
+    time: 0,
+    cyclePhase: 0,
+    systolicP: 120,
+    diastolicP: 80,
+    calculatedSys: 120, 
+    history: [] 
+};
+
+// --- DOM ELEMENTS ---
+const simCanvas = document.getElementById('simCanvas');
+const simCtx = simCanvas.getContext('2d');
+const graphCanvas = document.getElementById('graphCanvas');
+const graphCtx = graphCanvas.getContext('2d');
+const zoomCanvas = document.getElementById('zoomCanvas');
+const zoomCtx = zoomCanvas.getContext('2d');
+
+// --- PARTICLES ---
+class Particle {
+    constructor() { this.reset(); this.x = Math.random() * simCanvas.width; }
+
+    reset() {
+        this.x = 0;
+        this.yOffset = (Math.random() - 0.5) * 0.8; 
+        this.radius = Math.random() * 2 + 1.5;
+        this.baseSpeed = Math.random() * 2 + 2;
+    }
+
+    update(dims, w) {
+        const artEnd = w * config.zones.arteryEnd;
+        const capEnd = w * config.zones.capillaryEnd;
+        let speed = 0;
+
+        // 1. ARTERY ZONE
+        if (this.x < artEnd) {
+            const pulse = state.isStiff 
+                ? Math.pow(Math.sin(state.cyclePhase * Math.PI), 10) 
+                : Math.sin(state.cyclePhase * Math.PI);
+            
+            const systole = state.cyclePhase < 0.5;
+            const forwardForce = systole ? pulse * 6 : 0.5;
+            speed = this.baseSpeed * 2 + (forwardForce * 2);
+
+            // Plaque Bernoulli Effect
+            const plaqueCenter = artEnd * 0.6;
+            const plaqueWidth = artEnd * 0.3;
+            if (state.plaqueLevel > 0 && Math.abs(this.x - plaqueCenter) < plaqueWidth/2) {
+                const dist = Math.abs(this.x - plaqueCenter);
+                const normDist = dist / (plaqueWidth/2);
+                const constriction = state.plaqueLevel/100 * (1 - Math.pow(normDist, 2));
+                const openRatio = 1 - constriction;
+                
+                this.yOffset = this.yOffset * 0.9 + (this.yOffset * 0.95) * 0.1; 
+                
+                speed *= (1 / Math.max(0.1, openRatio));
+                if (speed > 15) speed = 15; 
+                
+                this.color = `hsl(350, 90%, 50%)`;
+            } else {
+                this.color = `hsl(350, 90%, 50%)`;
+            }
+        } 
+        // 2. CAPILLARY ZONE
+        else if (this.x < capEnd) {
+            speed = this.baseSpeed * 0.4;
+            const progress = (this.x - artEnd) / (capEnd - artEnd);
+            this.color = `hsl(${350 - (progress * 110)}, 70%, 50%)`;
+        } 
+        // 3. VEIN ZONE
+        else {
+            this.color = `hsl(240, 80%, 60%)`;
+            speed = this.baseSpeed * 0.8;
+
+            const veinLen = w - capEnd;
+            const valves = [capEnd + veinLen*0.3, capEnd + veinLen*0.6, capEnd + veinLen*0.9];
+            
+            if (state.hasValves) {
+                valves.forEach(vx => {
+                    if (Math.abs(this.x - vx) < 15) { 
+                        speed *= 1.5; 
+                    }
+                });
+            } else {
+                if (state.cyclePhase > 0.5) speed = -1.0; 
+            }
+        }
+
+        this.x += speed;
+        if (this.x > w) this.reset();
+        if (this.x < 0) this.x = 0;
+    }
+
+    draw(ctx, tubeY, tubeH) {
+        const y = tubeY + (this.yOffset * tubeH);
+        ctx.beginPath();
+        ctx.arc(this.x, y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    }
+}
+
+let particles = Array.from({ length: config.particleCount }, () => new Particle());
+
+// --- VISUALIZATION LOGIC ---
+
+function drawVessels(ctx, w, h) {
+    const cy = h/2;
+    const tubeH = h * 0.4;
+    const halfH = tubeH / 2;
+    const artEnd = w * config.zones.arteryEnd;
+    const capEnd = w * config.zones.capillaryEnd;
+
+    const grad = ctx.createLinearGradient(0, 0, w, 0);
+    grad.addColorStop(0, '#ef4444');
+    grad.addColorStop(config.zones.arteryEnd, '#ef4444');
+    grad.addColorStop(config.zones.capillaryEnd, '#3b82f6');
+    grad.addColorStop(1, '#3b82f6');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 4;
+    ctx.lineJoin = 'round';
+
+    let rPulse = 0;
+    if (state.cyclePhase < 0.4 && !state.isStiff) {
+        rPulse = Math.sin(state.cyclePhase/0.4 * Math.PI) * 8;
+    }
+
+    const drawWall = (isTop) => {
+        const sign = isTop ? -1 : 1;
+        ctx.beginPath();
+        ctx.moveTo(0, cy + (sign * (halfH + rPulse)));
+        ctx.lineTo(artEnd, cy + (sign * halfH));
+        ctx.bezierCurveTo(artEnd + 50, cy + (sign*halfH), artEnd + 50, cy + (sign*10), (artEnd+capEnd)/2, cy + (sign*10));
+        ctx.bezierCurveTo(capEnd - 50, cy + (sign*10), capEnd - 50, cy + (sign*halfH), capEnd, cy + (sign*halfH));
+        ctx.lineTo(w, cy + (sign * halfH));
+        ctx.stroke();
+    };
+    drawWall(true);
+    drawWall(false);
+
+    if (state.plaqueLevel > 0) {
+        const pCenter = artEnd * 0.6;
+        const pWidth = artEnd * 0.3;
+        const plaqueH = (state.plaqueLevel/100) * (halfH * 0.85);
+        ctx.fillStyle = '#eab308';
+        
+        ctx.beginPath();
+        ctx.moveTo(pCenter - pWidth/2, cy - halfH);
+        ctx.quadraticCurveTo(pCenter, cy - halfH + plaqueH * 2, pCenter + pWidth/2, cy - halfH);
+        ctx.fill(); 
+
+        ctx.beginPath();
+        ctx.moveTo(pCenter - pWidth/2, cy + halfH);
+        ctx.quadraticCurveTo(pCenter, cy + halfH - plaqueH * 2, pCenter + pWidth/2, cy + halfH);
+        ctx.fill(); 
+    }
+
+    const veinLen = w - capEnd;
+    const valves = [capEnd + veinLen*0.3, capEnd + veinLen*0.6, capEnd + veinLen*0.9];
+    ctx.strokeStyle = state.hasValves ? "rgba(255,255,255,0.4)" : "rgba(255,0,0,0.3)";
+    ctx.lineWidth = 2;
+
+    valves.forEach(vx => {
+        if (state.hasValves) {
+            const isOpen = state.cyclePhase < 0.6; 
+            const gap = isOpen ? 10 : 0;
+            ctx.beginPath(); ctx.moveTo(vx, cy - halfH); ctx.lineTo(vx + 15, cy - gap); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(vx, cy + halfH); ctx.lineTo(vx + 15, cy + gap); ctx.stroke();
+        } else {
+            ctx.beginPath(); ctx.moveTo(vx, cy - halfH); ctx.lineTo(vx + 5, cy - halfH + 10); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(vx, cy + halfH); ctx.lineTo(vx + 5, cy + halfH - 10); ctx.stroke();
+        }
+    });
+
+    return { tubeY: cy, tubeH };
+}
+
+// --- GRAPHING ENGINE ---
+
+function updateGraphData() {
+    const resistance = 1 + (state.plaqueLevel / 100) * 0.5; 
+    state.calculatedSys = state.isStiff ? 170 : 120 * resistance;
+    
+    const beat = Math.sin(state.cyclePhase * Math.PI); 
+    const pWave = state.cyclePhase < 0.4 ? beat : 0;
+    
+    const pArt = state.diastolicP + (state.calculatedSys - state.diastolicP) * pWave;
+    const vArt = (state.cyclePhase < 0.4 ? 80 : 15);
+    
+    let pVein = 10 + (Math.sin(state.time * 2) * 2);
+    let vVein = 20;
+    if (!state.hasValves && state.cyclePhase > 0.5) vVein = -10; 
+    
+    state.history.push({ pArt, vArt, pVein, vVein });
+    if (state.history.length > 300) state.history.shift();
+}
+
+function drawGrid(w, h, paddingBottom) {
+    const chartHeight = h - paddingBottom;
+    graphCtx.font = "10px JetBrains Mono";
+    graphCtx.textBaseline = "middle";
+    graphCtx.lineWidth = 1;
+
+    // Levels: 0, 50, 100, 150, 200
+    const pLevels = [0, 50, 100, 150, 200];
+    pLevels.forEach(p => {
+        const y = chartHeight - (p / 200 * chartHeight);
+        graphCtx.strokeStyle = "rgba(51, 65, 85, 0.4)";
+        graphCtx.beginPath();
+        graphCtx.moveTo(25, y);
+        graphCtx.lineTo(w - 25, y);
+        graphCtx.stroke();
+        
+        graphCtx.fillStyle = "#ef4444"; 
+        graphCtx.textAlign = "right";
+        graphCtx.fillText(p, 22, y);
+    });
+
+    const vLevels = [0, 50, 100, 150];
+    vLevels.forEach(v => {
+        const y = chartHeight - (v / 150 * chartHeight);
+        graphCtx.fillStyle = "#facc15"; 
+        graphCtx.textAlign = "left";
+        graphCtx.fillText(v, w - 22, y);
+    });
+}
+
+function drawGraphs() {
+    const w = graphCanvas.width;
+    const h = graphCanvas.height;
+    const paddingBottom = 30;
+    
+    graphCtx.clearRect(0, 0, w, h);
+    drawGrid(w, h, paddingBottom);
+
+    if (state.graphMode === 'spatial') {
+        drawSpatialGraph(w, h, paddingBottom);
+        document.getElementById('xlabel-spatial').classList.remove('hidden');
+        document.getElementById('xlabel-time').classList.add('hidden');
+    } else {
+        drawTimeGraph(w, h, state.graphMode, paddingBottom);
+        document.getElementById('xlabel-spatial').classList.add('hidden');
+        document.getElementById('xlabel-time').classList.remove('hidden');
+    }
+}
+
+// === STATIC SPATIAL GRAPH ===
+function drawSpatialGraph(w, h, paddingBottom) {
+    const artEnd = config.zones.arteryEnd;
+    const capEnd = config.zones.capillaryEnd;
+    const chartHeight = h - paddingBottom;
+
+    const pGrad = graphCtx.createLinearGradient(0, chartHeight, 0, 0);
+    pGrad.addColorStop(0, "rgba(239, 68, 68, 0.1)");
+    pGrad.addColorStop(1, "rgba(239, 68, 68, 0.4)");
+    
+    graphCtx.fillStyle = pGrad;
+    graphCtx.strokeStyle = "#ef4444";
+    graphCtx.lineWidth = 3;
+    graphCtx.beginPath();
+    graphCtx.moveTo(0, chartHeight);
+
+    const step = 2;
+    for (let x = 0; x <= w; x += step) {
+        const normX = x / w;
+        let p = 0;
+
+        if (normX < artEnd) {
+            p = state.calculatedSys - (normX * 15);
+            if (state.plaqueLevel > 0) {
+                 const pc = artEnd * 0.6;
+                 const dist = Math.abs(normX - pc);
+                 if (dist < 0.15) {
+                    const dip = (state.plaqueLevel/3) * Math.exp(-(dist*dist)/0.002);
+                    p -= dip;
+                 }
+            }
+        } else if (normX < capEnd) {
+            const pStart = state.calculatedSys - (artEnd * 15);
+            const pEnd = 15;
+            const t = (normX - artEnd) / (capEnd - artEnd);
+            const ease = t * t * (3 - 2 * t); 
+            p = pStart * (1 - ease) + pEnd * ease;
+        } else {
+            p = 15 - ((normX - capEnd) * 5); 
+        }
+        
+        if (p < 0) p = 0;
+        const y = chartHeight - (p / 200 * chartHeight);
+        graphCtx.lineTo(x, y);
+    }
+    graphCtx.lineTo(w, chartHeight);
+    graphCtx.fill();
+    graphCtx.stroke();
+
+    graphCtx.strokeStyle = "#facc15";
+    graphCtx.lineWidth = 2;
+    graphCtx.beginPath();
+    
+    for (let x = 0; x <= w; x += step) {
+        const normX = x / w;
+        let v = 0;
+
+        if (normX < artEnd) {
+            v = 40; 
+            if (state.plaqueLevel > 0) {
+                const pc = artEnd * 0.6;
+                const dist = Math.abs(normX - pc);
+                const spike = (state.plaqueLevel/6) * Math.exp(-(dist*dist)/0.002); 
+                v += spike * 10;
+            }
+        } else if (normX < capEnd) {
+            const vStart = 40;
+            const vMid = 2;
+            const t = (normX - artEnd) / (capEnd - artEnd);
+            const distFromCenter = Math.abs(t - 0.5) * 2; 
+            v = vMid + (vStart - vMid) * Math.pow(distFromCenter, 2.5);
+        } else {
+            v = 15;
+            if (state.hasValves) {
+                const veinLen = 1 - capEnd;
+                const relX = normX - capEnd;
+                const v1 = veinLen * 0.3;
+                const v2 = veinLen * 0.6;
+                const v3 = veinLen * 0.9;
+                const bump = (center) => Math.exp(-Math.pow(relX - center, 2) / 0.001) * 10;
+                v += bump(v1) + bump(v2) + bump(v3);
+            }
+        }
+
+        const y = chartHeight - (v / 150 * chartHeight);
+        if (x === 0) graphCtx.moveTo(x, y);
+        else graphCtx.lineTo(x, y);
+    }
+    graphCtx.stroke();
+
+    graphCtx.fillStyle = "#ef4444"; graphCtx.fillText("Tekanan (mmHg)", 40, 20);
+    graphCtx.fillStyle = "#facc15"; graphCtx.fillText("Kecepatan (cm/s)", 150, 20);
+}
+
+function drawTimeGraph(w, h, mode, paddingBottom) {
+    const data = state.history;
+    if (data.length < 2) return;
+    
+    const chartHeight = h - paddingBottom;
+
+    graphCtx.strokeStyle = mode === 'artery' ? "#ef4444" : "#3b82f6";
+    graphCtx.lineWidth = 3;
+    graphCtx.beginPath();
+    
+    const step = w / 300;
+    for (let i = 0; i < data.length; i++) {
+        const val = mode === 'artery' ? data[i].pArt : data[i].pVein;
+        const scale = 200; 
+        
+        const y = chartHeight - (val / scale * chartHeight);
+        if (i===0) graphCtx.moveTo(0, y); else graphCtx.lineTo(i*step, y);
+    }
+    graphCtx.stroke();
+
+    graphCtx.strokeStyle = "#facc15";
+    graphCtx.lineWidth = 1;
+    graphCtx.setLineDash([5, 5]); 
+    graphCtx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+        const val = mode === 'artery' ? data[i].vArt : data[i].vVein;
+        const scale = 150;
+        const y = chartHeight - (val / scale * chartHeight);
+        if (i===0) graphCtx.moveTo(0, y); else graphCtx.lineTo(i*step, y);
+    }
+    graphCtx.stroke();
+    graphCtx.setLineDash([]);
+
+    graphCtx.fillStyle = mode === 'artery' ? "#ef4444" : "#3b82f6";
+    graphCtx.textAlign = "left";
+    graphCtx.fillText(`Tekanan ${mode === 'artery' ? 'Arteri' : 'Vena'}`, 40, 20);
+    graphCtx.fillStyle = "#facc15"; 
+    graphCtx.fillText("Kecepatan", 150, 20);
+}
+
+function setGraphMode(mode) {
+    state.graphMode = mode;
+    document.querySelectorAll('.graph-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+// --- CONTROLS ---
+document.getElementById('slider-bpm').addEventListener('input', (e) => {
+    state.bpm = parseInt(e.target.value);
+    document.getElementById('bpm-display').innerText = state.bpm + " BPM";
+});
+document.getElementById('slider-plaque').addEventListener('input', (e) => {
+    state.plaqueLevel = parseInt(e.target.value);
+    document.getElementById('plaque-display').innerText = state.plaqueLevel + "%";
+});
+document.getElementById('toggle-stiffness').addEventListener('change', (e) => state.isStiff = e.target.checked);
+document.getElementById('toggle-valves').addEventListener('change', (e) => state.hasValves = e.target.checked);
+document.getElementById('toggle-zoom').addEventListener('change', (e) => state.isZoomed = e.target.checked);
+
+// --- MAIN LOOP ---
+function init() {
+    resize();
+    requestAnimationFrame(animate);
+}
+
+function resize() {
+    const p = simCanvas.parentElement;
+    simCanvas.width = p.offsetWidth;
+    simCanvas.height = p.offsetHeight;
+    
+    const gp = graphCanvas.parentElement;
+    graphCanvas.width = gp.offsetWidth;
+    graphCanvas.height = gp.offsetHeight;
+
+    zoomCanvas.width = 300; 
+    zoomCanvas.height = 300;
+}
+
+function animate() {
+    const freq = state.bpm / 60;
+    state.time += 0.016 * freq;
+    state.cyclePhase = state.time % 1;
+
+    // Bersihkan Canvas
+    simCtx.clearRect(0,0,simCanvas.width, simCanvas.height);
+    
+    const dims = drawVessels(simCtx, simCanvas.width, simCanvas.height);
+    particles.forEach(p => {
+        p.update(dims, simCanvas.width);
+        p.draw(simCtx, dims.tubeY, dims.tubeH);
+    });
+
+    updateGraphData();
+    drawGraphs();
+
+    // Zoom Logic
+    if (state.isZoomed) {
+        zoomCanvas.classList.remove('hidden');
+        document.getElementById('zoom-label').classList.remove('hidden');
+        zoomCtx.fillStyle = "#0f172a"; 
+        zoomCtx.fillRect(0,0,300,300);
+        
+        // Menggambar ulang bagian Vena dengan skala lebih besar
+        const tx = simCanvas.width * config.zones.capillaryEnd + 50;
+        zoomCtx.drawImage(simCanvas, tx - 75, dims.tubeY - 75, 150, 150, 0, 0, 300, 300);
+        
+        // Crosshair
+        zoomCtx.strokeStyle = "rgba(59, 130, 246, 0.5)"; 
+        zoomCtx.beginPath();
+        zoomCtx.moveTo(150,0); zoomCtx.lineTo(150,300); 
+        zoomCtx.moveTo(0,150); zoomCtx.lineTo(300,150); 
+        zoomCtx.stroke();
+    } else {
+        zoomCanvas.classList.add('hidden');
+        document.getElementById('zoom-label').classList.add('hidden');
+    }
+
+    // UI Updates (Throttled untuk performa)
+    if (Math.floor(state.time * 20) % 10 === 0) {
+        document.getElementById('stat-bp').innerText = `${Math.round(state.calculatedSys)}/${state.diastolicP}`;
+        document.getElementById('stat-vp').innerText = `${Math.round(state.history[state.history.length-1].pVein)}`;
+        
+        const resLabel = document.getElementById('stat-res');
+        if (state.plaqueLevel > 60) { 
+            resLabel.innerText = "BAHAYA (Sangat Tinggi)"; 
+            resLabel.className = "font-bold text-red-500"; 
+        } else if (state.plaqueLevel > 30) { 
+            resLabel.innerText = "TINGGI"; 
+            resLabel.className = "font-bold text-orange-400"; 
+        } else { 
+            resLabel.innerText = "NORMAL"; 
+            resLabel.className = "font-bold text-emerald-400"; 
+        }
+
+        // Peringatan
+        document.getElementById('warning-artery').style.display = (state.isStiff || state.calculatedSys > 150) ? 'block' : 'none';
+        document.getElementById('warning-plaque').style.display = (state.plaqueLevel > 50) ? 'block' : 'none';
+    }
+
+    requestAnimationFrame(animate);
+}
+
+// Handle resize event untuk responsivitas iframe
+window.addEventListener('resize', resize);
+init();
+
+</script>
+</body>
+</html>

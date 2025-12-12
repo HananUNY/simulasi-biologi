@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Difusi vs Osmosis</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <header>
+        <h1>Perbandingan Difusi vs Osmosis</h1>
+        <p>Simulasi Interaktif Biologi Sel</p>
+    </header>
+
+    <main class="container">
+        <!-- ZONA DIFUSI (KIRI) -->
+        <section class="simulation-zone" id="diffusion-zone">
+            <div class="zone-header">
+                <h2>1. Difusi</h2>
+                <span class="badge">Tanpa Membran</span>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="diffusionCanvas"></canvas>
+            </div>
+
+            <div class="controls">
+                <button id="inkDropBtn" class="btn-primary">💧 Teteskan Tinta</button>
+                <p id="diffusionStatus" class="status-text">Klik tombol untuk memulai difusi.</p>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><span class="dot red"></span> Partikel Tinta (Zat Terlarut)</div>
+                <div class="legend-item"><span class="dot blue-faint"></span> Air (Pelarut)</div>
+            </div>
+        </section>
+
+        <!-- ZONA OSMOSIS (KANAN) -->
+        <section class="simulation-zone" id="osmosis-zone">
+            <div class="zone-header">
+                <h2>2. Osmosis</h2>
+                <span class="badge warning">Membran Semipermeabel</span>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="osmosisCanvas"></canvas>
+            </div>
+
+            <div class="controls">
+                <label for="sugarSlider">Jumlah Gula di Kanan: <span id="sugarValue">0</span></label>
+                <input type="range" id="sugarSlider" min="0" max="50" value="0">
+                <p id="osmosisStatus" class="status-text">Partikel Zat Terlarut terhalang membran.</p>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><span class="dot blue"></span> Air (Pelarut)</div>
+                <div class="legend-item"><span class="dot yellow"></span> Gula (Zat Terlarut)</div>
+                <div class="legend-item"><span class="line-dashed"></span> Membran</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ZONA DATA & KONTROL LAB (BARU) -->
+    <section class="lab-dashboard">
+        <div class="dashboard-header">
+            <h2>🧪 Laboratorium Digital</h2>
+            <p>Atur variabel lingkungan untuk melihat efeknya.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Panel Kontrol -->
+            <div class="control-panel">
+                <div class="control-group">
+                    <label>🌡️ Suhu (Temperature)</label>
+                    <input type="range" id="tempSlider" min="0" max="80" value="25">
+                    <div class="range-labels">
+                        <span>0°C (Dingin)</span>
+                        <span id="tempValue">25°C</span>
+                        <span>80°C (Panas)</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>⚛️ Ukuran Molekul (Difusi)</label>
+                    <div class="toggle-group">
+                        <label class="toggle-btn">
+                            <input type="radio" name="molSize" value="small" checked>
+                            <span>Kecil (Ringan)</span>
+                        </label>
+                        <label class="toggle-btn">
+                            <input type="radio" name="molSize" value="large">
+                            <span>Besar (Berat)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>🛡️ Permeabilitas Membran (Osmosis)</label>
+                    <input type="range" id="permeabilitySlider" min="0" max="100" value="0">
+                    <div class="range-labels">
+                        <span>Ketat (0%)</span>
+                        <span id="permValue">0%</span>
+                        <span>Bocor (100%)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafik Real-time -->
+            <div class="graph-panel">
+                <h3>📈 Laju Kesetimbangan</h3>
+                <canvas id="graphCanvas"></canvas>
+                <p class="graph-legend">Sumbu Y: Indeks Kesetimbangan | Sumbu X: Waktu</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="comparison-section">
+        <h3>Ringkasan Perbandingan</h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fitur</th>
+                        <th>Difusi</th>
+                        <th>Osmosis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Membran</strong></td>
+                        <td>Tidak Memerlukan Membran</td>
+                        <td>Memerlukan Membran Semipermeabel</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Yang Berpindah</strong></td>
+                        <td>Zat Terlarut (Tinta)</td>
+                        <td>Pelarut (Air)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Arah</strong></td>
+                        <td>Konsentrasi Tinggi ke Rendah</td>
+                        <td>Konsentrasi Rendah ke Tinggi (Zat Terlarut)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        <p>Dibuat untuk Simulasi Edukasi Biologi</p>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+
+</html>

@@ -4,155 +4,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulasi Difusi vs Osmosis</title>
+    <title>Simulasi Difusi & Osmosis</title>
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
 
-    <header>
-        <h1>Perbandingan Difusi vs Osmosis</h1>
-        <p>Simulasi Interaktif Biologi Sel</p>
-    </header>
+    <!-- Main Application Container -->
+    <div class="app-container">
 
-    <main class="container">
-        <!-- ZONA DIFUSI (KIRI) -->
-        <section class="simulation-zone" id="diffusion-zone">
-            <div class="zone-header">
-                <h2>1. Difusi</h2>
-                <span class="badge">Tanpa Membran</span>
+        <!-- Navigation Bar (Tabs) -->
+        <nav class="top-nav">
+            <div class="brand">
+                <i class="fas fa-flask"></i>
+                <span>Simulasi Biologi</span>
             </div>
 
-            <div class="canvas-container">
-                <canvas id="diffusionCanvas"></canvas>
+            <div class="tabs-container">
+                <button class="nav-tab active" data-tab="diffusion">
+                    <i class="fas fa-wind"></i>
+                    Difusi
+                </button>
+                <button class="nav-tab" data-tab="osmosis">
+                    <i class="fas fa-water"></i>
+                    Osmosis
+                </button>
             </div>
 
-            <div class="controls">
-                <button id="inkDropBtn" class="btn-primary">💧 Teteskan Tinta</button>
-                <p id="diffusionStatus" class="status-text">Klik tombol untuk memulai difusi.</p>
+            <div class="nav-actions">
+                <button class="icon-btn" id="btnReset" title="Reset Sim">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <button class="icon-btn" id="btnSettings" title="Pengaturan">
+                    <i class="fas fa-cog"></i>
+                </button>
             </div>
+        </nav>
 
-            <div class="legend">
-                <div class="legend-item"><span class="dot red"></span> Partikel Tinta (Zat Terlarut)</div>
-                <div class="legend-item"><span class="dot blue-faint"></span> Air (Pelarut)</div>
-            </div>
-        </section>
+        <!-- Main Workspace -->
+        <main class="workspace">
 
-        <!-- ZONA OSMOSIS (KANAN) -->
-        <section class="simulation-zone" id="osmosis-zone">
-            <div class="zone-header">
-                <h2>2. Osmosis</h2>
-                <span class="badge warning">Membran Semipermeabel</span>
-            </div>
+            <!-- Left: Simulation Stage -->
+            <section class="stage-container">
+                <div class="canvas-wrapper">
+                    <canvas id="mainCanvas"></canvas>
 
-            <div class="canvas-container">
-                <canvas id="osmosisCanvas"></canvas>
-            </div>
+                    <!-- Overlays / Floating Legends -->
+                    <div class="stage-legend">
+                        <div class="legend-row ml-water">
+                            <span class="dot blue"></span> Air
+                        </div>
+                        <div class="legend-row ml-solute">
+                            <span class="dot solute"></span> Zat Terlarut
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            <div class="controls">
-                <label for="sugarSlider">Jumlah Gula di Kanan: <span id="sugarValue">0</span></label>
-                <input type="range" id="sugarSlider" min="0" max="50" value="0">
-                <p id="osmosisStatus" class="status-text">Partikel Zat Terlarut terhalang membran.</p>
-            </div>
+            <!-- Right: Control Panel -->
+            <aside class="control-sidebar">
 
-            <div class="legend">
-                <div class="legend-item"><span class="dot blue"></span> Air (Pelarut)</div>
-                <div class="legend-item"><span class="dot yellow"></span> Gula (Zat Terlarut)</div>
-                <div class="legend-item"><span class="line-dashed"></span> Membran</div>
-            </div>
-        </section>
-    </main>
-
-    <!-- ZONA DATA & KONTROL LAB (BARU) -->
-    <section class="lab-dashboard">
-        <div class="dashboard-header">
-            <h2>🧪 Laboratorium Digital</h2>
-            <p>Atur variabel lingkungan untuk melihat efeknya.</p>
-        </div>
-
-        <div class="dashboard-grid">
-            <!-- Panel Kontrol -->
-            <div class="control-panel">
-                <div class="control-group">
-                    <label>🌡️ Suhu (Temperature)</label>
-                    <input type="range" id="tempSlider" min="0" max="80" value="25">
-                    <div class="range-labels">
-                        <span>0°C (Dingin)</span>
-                        <span id="tempValue">25°C</span>
-                        <span>80°C (Panas)</span>
+                <!-- Common Controls (Global) -->
+                <div class="control-box">
+                    <div class="box-header">
+                        <i class="fas fa-sliders-h"></i> Variabel Lingkungan
+                    </div>
+                    <div class="box-content">
+                        <div class="control-item">
+                            <label>Suhu (Temperature)</label>
+                            <input type="range" id="tempSlider" min="0" max="80" value="25">
+                            <div class="range-value" id="tempValue">25°C</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <label>⚛️ Ukuran Molekul (Difusi)</label>
-                    <div class="toggle-group">
-                        <label class="toggle-btn">
-                            <input type="radio" name="molSize" value="small" checked>
-                            <span>Kecil (Ringan)</span>
-                        </label>
-                        <label class="toggle-btn">
-                            <input type="radio" name="molSize" value="large">
-                            <span>Besar (Berat)</span>
-                        </label>
+                <!-- Diffusion Specific Controls -->
+                <div class="control-box specific-control" id="diffusion-controls">
+                    <div class="box-header">
+                        <i class="fas fa-wind"></i> Parameter Difusi
+                    </div>
+                    <div class="box-content">
+                        <div class="control-item">
+                            <label>Ukuran Partikel</label>
+                            <div class="toggle-switch">
+                                <input type="radio" id="smallMol" name="molSize" value="small" checked>
+                                <label for="smallMol">Kecil</label>
+                                <input type="radio" id="largeMol" name="molSize" value="large">
+                                <label for="largeMol">Besar</label>
+                            </div>
+                        </div>
+                        <div class="control-item action-row">
+                            <button id="inkDropBtn" class="btn-action">
+                                <i class="fas fa-tint"></i> Teteskan Tinta
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <label>🛡️ Permeabilitas Membran (Osmosis)</label>
-                    <input type="range" id="permeabilitySlider" min="0" max="100" value="0">
-                    <div class="range-labels">
-                        <span>Ketat (0%)</span>
-                        <span id="permValue">0%</span>
-                        <span>Bocor (100%)</span>
+                <!-- Osmosis Specific Controls -->
+                <div class="control-box specific-control hidden" id="osmosis-controls">
+                    <div class="box-header">
+                        <i class="fas fa-water"></i> Parameter Osmosis
+                    </div>
+                    <div class="box-content">
+                        <div class="control-item">
+                            <label>Konsentrasi Gula (Kanan)</label>
+                            <input type="range" id="sugarSlider" min="0" max="50" value="0">
+                            <div class="range-value" id="sugarValue">0 Partikel</div>
+                        </div>
+                        <div class="control-item">
+                            <label>Permeabilitas Membran</label>
+                            <input type="range" id="permeabilitySlider" min="0" max="100" value="0">
+                            <div class="range-value" id="permValue">0%</div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Data/Graph Panel -->
+                <div class="control-box">
+                    <div class="box-header">
+                        <i class="fas fa-chart-line"></i> Data Real-time
+                    </div>
+                    <div class="box-content no-padding">
+                        <canvas id="graphCanvas"></canvas>
+                    </div>
+                </div>
+
+            </aside>
+
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-box">
+            <div class="modal-header">Pilih Tema</div>
+            <div class="theme-grid" id="themeGrid">
+                <!-- Generated by JS -->
             </div>
-
-            <!-- Grafik Real-time -->
-            <div class="graph-panel">
-                <h3>📈 Laju Kesetimbangan</h3>
-                <canvas id="graphCanvas"></canvas>
-                <p class="graph-legend">Sumbu Y: Indeks Kesetimbangan | Sumbu X: Waktu</p>
-            </div>
+            <button class="modal-close" id="closeSettings">Tutup</button>
         </div>
-    </section>
-
-    <section class="comparison-section">
-        <h3>Ringkasan Perbandingan</h3>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Fitur</th>
-                        <th>Difusi</th>
-                        <th>Osmosis</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Membran</strong></td>
-                        <td>Tidak Memerlukan Membran</td>
-                        <td>Memerlukan Membran Semipermeabel</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Yang Berpindah</strong></td>
-                        <td>Zat Terlarut (Tinta)</td>
-                        <td>Pelarut (Air)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Arah</strong></td>
-                        <td>Konsentrasi Tinggi ke Rendah</td>
-                        <td>Konsentrasi Rendah ke Tinggi (Zat Terlarut)</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <footer>
-        <p>Dibuat untuk Simulasi Edukasi Biologi</p>
-    </footer>
+    </div>
 
     <script src="js/script.js"></script>
 </body>

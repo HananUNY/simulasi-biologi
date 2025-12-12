@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Tata Kelola Lahan & Banjir</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div id="floodWarningOverlay"></div>
+    <div id="floodWarningBanner" class="warning-banner">⚠️ BAHAYA BANJIR KRITIS!</div>
+
+    <div id="introModal" class="modal">
+        <div class="modal-content">
+            <h2>ℹ️ Perhatian dan Disclaimer </h2>
+            <p>Simulasi ini adalah model penyederhanaan untuk tujuan pendidikan. Kita akan melihat dampak kebijakan
+                pemerintah (batas izin lahan), laju deforestasi, dan konversi hutan menjadi kebun kelapa sawit terhadap
+                ekosistem dan potensi bencana banjir.</p>
+            <button id="btnUnderstand" class="modal-btn">Saya Paham & Lanjutkan</button>
+        </div>
+    </div>
+
+    <div id="dataModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeDataModal()">&times;</span>
+            <h2>🌏 Data Satelit</h2>
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="switchTab('sumatra')">Sumatera</button>
+                <button class="tab-btn" onclick="switchTab('kalimantan')">Kalimantan</button>
+            </div>
+            <div id="tab-sumatra" class="tab-content active">
+                <p>Evolusi 1990 - 2020</p>
+                <img src="images/sumatera.gif" alt="Sumatera">
+                <p style="font-size:0.9rem">Analisis: Penurunan hutan signifikan akibat perkebunan.</p>
+            </div>
+            <div id="tab-kalimantan" class="tab-content">
+                <p>Evolusi 1990 - 2020</p>
+                <img src="images/kalimantan.gif" alt="Kalimantan">
+                <p style="font-size:0.9rem">Analisis: Deforestasi pesat di area pesisir.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h1>Monitor Tata Kelola Lahan</h1>
+            <h2>Simulasi Kebijakan & Dampak</h2>
+
+            <div class="time-widget">
+                <div id="weatherIcon" class="weather-icon">☀️</div>
+                <div id="timeDisplay" class="time-display">12:00</div>
+                <div id="dayDisplay" class="day-display">Hari Ke-1</div>
+                <div style="font-size: 0.7rem; color: #4ade80; margin-top: 5px;" id="evapoStatus">Evapotranspirasi:
+                    Tinggi</div>
+                <div class="speed-controls">
+                    <button class="btn-speed active" id="spd1" onclick="setSimSpeed(1, this)">1x</button>
+                    <button class="btn-speed" id="spd2" onclick="setSimSpeed(2, this)">2x</button>
+                    <button class="btn-speed" id="spd5" onclick="setSimSpeed(5, this)">5x</button>
+                </div>
+            </div>
+
+            <button id="btnShowRealData" class="btn-speed btn-info"
+                style="width: 100%; padding: 10px; border: none; font-weight: bold; margin-bottom: 20px;">🌏 Lihat Data
+                Real</button>
+
+            <div class="control-group" style="background: rgba(255, 255, 255, 0.1);">
+                <div class="control-header" style="color: #fbbf24;">0. Preset Skenario</div>
+                <div class="preset-group">
+                    <button class="btn-preset" onclick="applyPreset('1990')">Kondisi 1990</button>
+                    <button class="btn-preset" onclick="applyPreset('2024')">Kondisi 2024</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-header">1. Industri & Ekonomi</div>
+
+                <label style="color: #f59e0b;">
+                    Batas Izin Pemerintah
+                    <span id="limitVal" class="value-display" style="color:#f59e0b">50%</span>
+                </label>
+                <span class="sub-label">Max rasio lahan non-hutan yang diizinkan</span>
+                <input type="range" class="limit-slider" id="limitSlider" min="0" max="100" value="50">
+
+                <label style="color: #f87171; margin-top:10px;">
+                    Aktivitas Pembukaan Lahan
+                    <span id="loggingVal" class="value-display" style="color:#f87171">Rendah</span>
+                </label>
+                <span class="sub-label">Laju konversi hutan menjadi lahan gundul</span>
+                <input type="range" class="logging-slider" id="loggingSlider" min="0" max="100" value="10">
+
+                <label style="color: #9333ea; margin-top:10px;">
+                    Konversi ke Kebun Sawit
+                    <span id="palmVal" class="value-display" style="color:#9333ea">Nihil</span>
+                </label>
+                <span class="sub-label">Laju lahan gundul ditanami sawit</span>
+                <input type="range" class="palm-slider" id="palmSlider" min="0" max="100" value="0">
+
+                <label style="margin-top: 8px;">Pola Penebangan</label>
+                <select id="deforestPattern">
+                    <option value="random">Acak (Selektif)</option>
+                    <option value="organized">Sistematis (Blok Besar)</option>
+                </select>
+
+                <div id="moratoriumStatus"
+                    style="margin-top:8px; font-size:0.75rem; color:#4ade80; border:1px solid #4ade80; padding:4px; text-align:center; border-radius:4px; display:none;">
+                    🔒 MORATORIUM AKTIF (Batas Tercapai)
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-header">2. Upaya Pemulihan & Alam</div>
+
+                <label style="color: #10b981;">
+                    Suksesi Alami (Natural)
+                    <span id="restoreVal" class="value-display" style="color:#10b981">Rendah</span>
+                </label>
+                <span class="sub-label">Kemampuan alam memulihkan diri</span>
+                <input type="range" class="restore-slider" id="restoreSlider" min="0" max="100" value="10">
+
+                <label style="color: #3b82f6; margin-top:10px;">
+                    Reboisasi (Aktif)
+                    <span id="reboisasiVal" class="value-display" style="color:#3b82f6">Nihil</span>
+                </label>
+                <span class="sub-label">Penanaman pohon hutan oleh manusia</span>
+                <input type="range" class="reboisasi-slider" id="reboisasiSlider" min="0" max="100" value="0">
+
+                <label style="color: #f59e0b; margin-top:10px;">
+                    Gangguan Alam (Bencana)
+                    <span id="naturalVal" class="value-display" style="color:#f59e0b">Jarang</span>
+                </label>
+                <span class="sub-label">Kebakaran, Angin Kencang (Sangat Jarang)</span>
+                <input type="range" class="natural-slider" id="naturalSlider" min="0" max="100" value="0">
+            </div>
+
+            <div class="control-group">
+                <div class="control-header">3. Cuaca & Iklim</div>
+
+                <div class="soil-controls">
+                    <div class="toggle-row">
+                        <span>Aktifkan Variabel Tanah</span>
+                        <input type="checkbox" id="soilToggle" checked>
+                    </div>
+                    <select id="soilTypeSelect">
+                        <option value="clay">Tanah Liat (Cepat Jenuh)</option>
+                        <option value="loam" selected>Tanah Gembur (Sedang)</option>
+                        <option value="sandy">Tanah Berpasir (Poros)</option>
+                    </select>
+                </div>
+
+                <div style="margin-top:10px; margin-bottom:15px;">
+                    <label style="font-size:0.7rem; color:#94a3b8;">Saturasi Tanah (Kejenuhan)</label>
+                    <div style="width:100%; height:6px; background:#334155; border-radius:3px; overflow:hidden;">
+                        <div id="saturationBar"
+                            style="width:0%; height:100%; background:#60a5fa; transition:width 0.2s;"></div>
+                    </div>
+                </div>
+
+                <label>
+                    Curah Hujan
+                    <span id="rainVal" class="value-display" style="color:var(--accent-color)">Gerimis</span>
+                </label>
+                <input type="range" id="rainSlider" min="0" max="100" value="15">
+            </div>
+
+            <div class="btn-group">
+                <button id="btnStart" class="btn-primary">Mulai</button>
+                <button id="btnReset" class="btn-outline">Reset</button>
+            </div>
+
+            <div class="stats-panel">
+                <div class="stat-card">
+                    <div class="stat-label">Hutan Alam</div>
+                    <div class="stat-value" id="forestCoverText" style="color:#15803d">100%</div>
+                    <div id="ecoStatus" class="status-badge status-safe" style="width:auto; margin:0;">STABIL</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Kebun Sawit</div>
+                    <div class="stat-value" id="palmCoverText" style="color:#9333ea">0%</div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Komposisi Lahan</div>
+                    <div class="chart-wrapper"><canvas id="landChart" class="mini-chart"></canvas></div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Level Banjir (Desa) <span id="floodLevelText"
+                            style="float:right; color:#3b82f6;">0 cm</span></div>
+                    <div class="chart-wrapper"><canvas id="floodChart" class="mini-chart"></canvas></div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="dot forest"></div> Hutan
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot palm"></div> Sawit
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot deforest"></div> Gundul
+                    </div>
+                    <div class="legend-item">
+                        <div class="dot" style="background:#0f172a; border:1px solid #60a5fa"></div> Jenuh
+                    </div>
+                </div>
+            </div>
+
+            <div class="attribution">
+                Coding oleh <strong>Gemini AI</strong><br>
+                Penyempurnaan oleh <strong>Hanan Dimas Prasetya</strong>
+            </div>
+        </aside>
+
+        <main class="main-view">
+            <canvas id="simCanvas"></canvas>
+        </main>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+
+</html>

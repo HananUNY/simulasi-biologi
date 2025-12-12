@@ -1,0 +1,140 @@
+/* Fallback font system jika Google Fonts gagal dimuat di intranet */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+body {
+    background-color: #0f172a;
+    /* Slate 900 */
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+    overflow: hidden;
+    user-select: none;
+    /* Moodle Specific: Mencegah scroll ganda di dalam iframe */
+    margin: 0;
+    padding: 0;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    /* Penting untuk canvas resolusi tinggi di layar retina */
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* Custom Scrollbar agar rapi di iframe kecil */
+.control-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.control-panel::-webkit-scrollbar-thumb {
+    background-color: #334155;
+    border-radius: 4px;
+}
+
+.alert-box {
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* Toggle Switch Styling */
+.switch-checkbox {
+    appearance: none;
+    width: 40px;
+    height: 20px;
+    background: #334155;
+    border-radius: 20px;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.3s;
+}
+
+.switch-checkbox::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.switch-checkbox:checked {
+    background: #10b981;
+    /* Emerald 500 */
+}
+
+.switch-checkbox:checked::after {
+    left: 22px;
+}
+
+.switch-checkbox.danger-switch:checked {
+    background: #ef4444;
+    /* Red 500 */
+}
+
+/* Tooltip Fixed Position agar tidak terpotong Iframe */
+.tooltip {
+    visibility: hidden;
+    position: absolute;
+    background: #1e293b;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    z-index: 100;
+    border: 1px solid #475569;
+    width: 220px;
+    line-height: 1.4;
+    bottom: 110%;
+    left: 0;
+    margin-bottom: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: normal;
+}
+
+.has-tooltip {
+    position: relative;
+}
+
+.has-tooltip:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.graph-btn {
+    padding: 4px 12px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    background: #1e293b;
+    color: #94a3b8;
+    cursor: pointer;
+    border: 1px solid #334155;
+    transition: all 0.2s;
+}
+
+.graph-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #60a5fa;
+}
+
+.graph-btn:hover:not(.active) {
+    background: #334155;
+}

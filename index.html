@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="favicon.png">
-    <title>Portal Simulasi Biologi</title>
+    <title>Portal Simulasi dan Lab Biologi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -12,40 +13,49 @@
             color: #e2e8f0;
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
+
         .card {
             transition: all 0.3s ease;
         }
+
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-    
+
+<body class="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-x-hidden">
+
     <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
         <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-green-600/20 rounded-full blur-3xl"></div>
     </div>
 
-    <div class="max-w-4xl w-full text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4 pb-2 bg-gradient-to-r from-blue-400 to-green-400 text-transparent bg-clip-text">
-            Simulasi Biologi Interaktif
+    <div class="max-w-7xl w-full text-center mb-12">
+        <h1
+            class="text-4xl md:text-5xl font-bold mb-4 pb-2 bg-gradient-to-r from-blue-400 to-green-400 text-transparent bg-clip-text">
+            Simulasi dan Lab Biologi Interaktif
         </h1>
-        <p class="text-slate-400 text-lg">Pilih topik simulasi untuk memulai pembelajaran</p>
+        <p class="text-slate-400 text-lg">Pilih topik simulasi atau lab untuk memulai pembelajaran</p>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-8 w-full max-w-4xl">
-        
-        <a href="simulasi_banjir_ver2.5.html" class="card group bg-slate-800 border border-slate-700 rounded-2xl p-8 cursor-pointer hover:border-blue-500 relative overflow-hidden block">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-7xl">
+
+        <a href="simulasi_banjir_ver2.5/simulasi_banjir_ver2.5.html"
+            class="card group bg-slate-800 border border-slate-700 rounded-2xl p-8 cursor-pointer hover:border-blue-500 relative overflow-hidden block">
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+            </div>
             <div class="relative z-10">
-                <div class="w-16 h-16 bg-blue-900/50 rounded-xl flex items-center justify-center mb-6 text-3xl border border-blue-500/30 text-blue-400">
+                <div
+                    class="w-16 h-16 bg-blue-900/50 rounded-xl flex items-center justify-center mb-6 text-3xl border border-blue-500/30 text-blue-400">
                     🌊
                 </div>
                 <h2 class="text-2xl font-bold text-white mb-3">Dinamika Hutan & Banjir</h2>
                 <p class="text-slate-400 text-sm leading-relaxed">
-                    Simulasi interaktif yang mempelajari hubungan antara curah hujan, jenis tanah, deforestasi, dan risiko banjir pada suatu ekosistem.
+                    Simulasi interaktif yang mempelajari hubungan antara curah hujan, jenis tanah, deforestasi, dan
+                    risiko banjir pada suatu ekosistem.
                 </p>
                 <div class="mt-6 flex items-center text-blue-400 text-sm font-semibold">
                     Mulai Simulasi <span class="ml-2 transition-transform group-hover:translate-x-1">→</span>
@@ -53,18 +63,44 @@
             </div>
         </a>
 
-        <a href="aglutinasi_ver1.html" class="card group bg-slate-800 border border-slate-700 rounded-2xl p-8 cursor-pointer hover:border-red-500 relative overflow-hidden block">
-            <div class="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <a href="aglutinasi_ver1/aglutinasi_ver1.html"
+            class="card group bg-slate-800 border border-slate-700 rounded-2xl p-8 cursor-pointer hover:border-red-500 relative overflow-hidden block">
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+            </div>
             <div class="relative z-10">
-                <div class="w-16 h-16 bg-red-900/50 rounded-xl flex items-center justify-center mb-6 text-3xl border border-red-500/30 text-red-400">
+                <div
+                    class="w-16 h-16 bg-red-900/50 rounded-xl flex items-center justify-center mb-6 text-3xl border border-red-500/30 text-red-400">
                     🩸
                 </div>
                 <h2 class="text-2xl font-bold text-white mb-3">Lab Golongan Darah</h2>
                 <p class="text-slate-400 text-sm leading-relaxed">
-                    Laboratorium virtual untuk menguji reaksi aglutinasi antara sel darah merah dan antibodi (serum) untuk menentukan golongan darah.
+                    Laboratorium virtual untuk menguji reaksi aglutinasi antara sel darah merah dan antibodi (serum)
+                    untuk menentukan golongan darah.
                 </p>
                 <div class="mt-6 flex items-center text-red-400 text-sm font-semibold">
                     Masuk Lab <span class="ml-2 transition-transform group-hover:translate-x-1">→</span>
+                </div>
+            </div>
+        </a>
+
+        <a href="simulasi_hemodinamika_fisiologis/simulasi_hemodinamika_fisiologis.html"
+            class="card group bg-slate-800 border border-slate-700 rounded-2xl p-8 cursor-pointer hover:border-pink-500 relative overflow-hidden block">
+            <div
+                class="absolute inset-0 bg-gradient-to-br from-pink-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+            </div>
+            <div class="relative z-10">
+                <div
+                    class="w-16 h-16 bg-pink-900/50 rounded-xl flex items-center justify-center mb-6 text-3xl border border-pink-500/30 text-pink-400">
+                    ❤️
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-3">Hemodinamika Fisiologis</h2>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Simulasi aliran darah, resistensi pembuluh, dan tekanan darah (arteri/vena) dengan visualisasi fisik
+                    partikel dan grafik real-time.
+                </p>
+                <div class="mt-6 flex items-center text-pink-400 text-sm font-semibold">
+                    Mulai Simulasi <span class="ml-2 transition-transform group-hover:translate-x-1">→</span>
                 </div>
             </div>
         </a>
@@ -78,7 +114,3 @@
 </body>
 
 </html>
-
-
-
-

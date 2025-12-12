@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Transport Membran</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="main-header">
+            <h1>Transport Membran</h1>
+            <p>Jelajahi bagaimana molekul bergerak melintasi membran sel.</p>
+        </header>
+
+        <nav class="simulation-tabs">
+            <button class="tab-btn active" data-tab="simple">Difusi Sederhana</button>
+            <button class="tab-btn" data-tab="facilitated">Difusi Terfasilitasi</button>
+            <button class="tab-btn" data-tab="active">Transport Aktif</button>
+            <button class="tab-btn" data-tab="bulk">Transport Massal</button>
+        </nav>
+
+        <main class="simulation-workspace">
+            <div class="canvas-container">
+                <!-- Canvas for Simulation -->
+                <canvas id="simCanvas"></canvas>
+
+                <!-- Overlay details or stats if needed -->
+                <div class="stats-overlay" id="statsOverlay">
+                    <!-- Stats will be injected here -->
+                </div>
+            </div>
+
+            <aside class="controls-panel">
+                <div class="control-group" id="controls-simple">
+                    <h3>Kontrol Difusi</h3>
+                    <div class="control-item">
+                        <label for="simple-concentration">Konsentrasi Ekstraseluler</label>
+                        <input type="range" id="simple-concentration" min="0" max="100" value="50">
+                        <span class="value-display" id="val-simple-concentration">50</span>
+                    </div>
+                    <div class="control-item">
+                        <label for="simple-temp">Suhu</label>
+                        <input type="range" id="simple-temp" min="10" max="50" value="25">
+                        <span class="value-display" id="val-simple-temp">25°C</span>
+                    </div>
+                    <div class="control-actions">
+                        <button id="reset-simple" class="btn-secondary">Reset</button>
+                        <button id="pause-simple" class="btn-primary">Pause</button>
+                    </div>
+                </div>
+
+                <div class="control-group hidden" id="controls-facilitated">
+                    <h3>Kontrol Terfasilitasi</h3>
+                    <div class="control-item">
+                        <label>Tipe Protein Channel</label>
+                        <select id="fac-protein-type">
+                            <option value="leak">Leak Channel</option>
+                            <option value="gated">Gated Channel</option>
+                        </select>
+                    </div>
+                    <div class="control-item">
+                        <label for="fac-concentration">Konsentrasi Glukosa</label>
+                        <input type="range" id="fac-concentration" min="0" max="50" value="10">
+                    </div>
+                </div>
+
+                <div class="control-group hidden" id="controls-active">
+                    <h3>Kontrol Transport Aktif</h3>
+                    <p>Pompa Na+/K+</p>
+                    <div class="control-item">
+                        <button id="add-atp" class="btn-accent">Tambah ATP</button>
+                        <span id="atp-count">ATP: 0</span>
+                    </div>
+                </div>
+
+                <div class="control-group hidden" id="controls-bulk">
+                    <h3>Kontrol Transport Massal</h3>
+                    <div class="control-actions">
+                        <button id="trigger-endo" class="btn-primary">Endositosis</button>
+                        <button id="trigger-exo" class="btn-secondary">Eksositosis</button>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

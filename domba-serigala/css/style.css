@@ -1,0 +1,55 @@
+/* Custom Scrollbar for the sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #1e293b;
+    /* slate-800 */
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #334155;
+    /* slate-700 */
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+    /* slate-600 */
+}
+
+/* Range Slider Styling */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: white;
+    /* accent-sky-500 fallback/custom */
+    border-radius: 50%;
+    height: 16px;
+    width: 16px;
+    margin-top: -6px;
+    /* center thumb */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+    background: #334155;
+    /* slate-700 */
+    height: 6px;
+    border-radius: 3px;
+}
+
+/* Chrome/Safari/Edge specific for colored track before thumb is tricky in pure CSS without JS updating background-size, 
+   so we keep it simple or stick to Tailwind's accent-* if supported. 
+   The original React code used 'accent-sky-500', which works in modern browsers.
+*/

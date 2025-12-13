@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Domba vs Serigala (Predasi Klasik)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="bg-slate-950 text-slate-200 font-sans min-h-screen">
+
+    <div class="p-4 flex flex-col xl:flex-row gap-6 items-start justify-center max-w-[1400px] mx-auto">
+
+        <!-- Kolom Kiri: Visualisasi -->
+        <div class="flex flex-col gap-4 w-full max-w-[600px]">
+            <!-- Header -->
+            <div class="flex items-center justify-between bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                <div>
+                    <h1
+                        class="text-xl font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">
+                        Predasi Klasik
+                    </h1>
+                    <p class="text-xs text-slate-400">Model Lotka-Volterra</p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="btnToggle"
+                        class="p-2 rounded-lg font-bold flex items-center gap-2 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-all">
+                        <i data-lucide="play" width="18"></i> MULAI
+                    </button>
+                    <button id="btnReset"
+                        class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                        title="Reset Simulasi">
+                        <i data-lucide="rotate-ccw" width="18"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div
+                class="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 aspect-square shadow-2xl">
+                <canvas id="simCanvas" width="600" height="600" class="w-full h-full object-contain"></canvas>
+
+                <!-- Stats Overlay -->
+                <div class="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                    <div
+                        class="bg-slate-950/80 backdrop-blur-md p-3 rounded-lg border border-slate-800 text-xs shadow-lg min-w-[140px]">
+                        <div class="flex justify-between items-center mb-1 text-sky-400">
+                            <span class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-sky-400"></div>
+                                Domba
+                            </span>
+                            <span id="statSheep" class="font-mono font-bold text-lg">0</span>
+                        </div>
+                        <div class="flex justify-between items-center mb-1 text-rose-400">
+                            <span class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-rose-500"></div>
+                                Serigala
+                            </span>
+                            <span id="statWolves" class="font-mono font-bold text-lg">0</span>
+                        </div>
+                        <div
+                            class="flex justify-between items-center pt-1 mt-1 border-t border-slate-800 text-emerald-500">
+                            <span class="flex items-center gap-2">
+                                <i data-lucide="leaf" width="12"></i>
+                                Rumput
+                            </span>
+                            <span id="statGrass" class="font-mono">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OVERLAY GAME OVER -->
+                <div id="overlay"
+                    class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+                    <img id="overlayMeme" src="https://media.tenor.com/DfIusDegWpAAAAAj/funny-laughing.gif"
+                        alt="Shaun Laughing"
+                        class="w-48 h-48 object-cover rounded-full border-4 border-sky-500 mb-4 shadow-[0_0_30px_rgba(14,165,233,0.5)] hidden">
+                    <i id="overlayIcon" data-lucide="shield-alert" width="64" class="text-amber-500 mb-4 hidden"></i>
+
+                    <h2 id="overlayTitle" class="text-2xl font-black text-white text-center px-6 mb-2 tracking-tight">
+                        GAME OVER</h2>
+                    <p id="overlaySub" class="text-slate-400 text-sm mb-6 px-8 text-center max-w-xs leading-relaxed">...
+                    </p>
+
+                    <button id="btnOverlayReset"
+                        class="px-6 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                        <i data-lucide="rotate-ccw" width="18"></i> Ulangi Simulasi
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grafik -->
+            <div class="bg-slate-900/50 rounded-xl p-4 border border-slate-800 h-56 w-full flex flex-col">
+                <div class="flex justify-between text-[10px] text-slate-400 mb-2 px-1 border-b border-slate-800 pb-2">
+                    <span class="font-bold flex items-center gap-2">
+                        <i data-lucide="zap" width="10"></i> Dinamika Populasi (Normalized)
+                    </span>
+                    <div class="flex gap-4">
+                        <div class="flex flex-col items-end">
+                            <span class="flex items-center gap-1 text-sky-400 font-bold">
+                                <div class="w-1.5 h-1.5 rounded-full bg-sky-400"></div> Domba
+                            </span>
+                            <span id="chartMaxS" class="text-[9px] text-sky-500/70">Max: 0</span>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="flex items-center gap-1 text-rose-400 font-bold">
+                                <div class="w-1.5 h-1.5 rounded-full bg-rose-500"></div> Serigala
+                            </span>
+                            <span id="chartMaxW" class="text-[9px] text-rose-500/70">Max: 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative flex-grow w-full overflow-hidden">
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full">
+                        <!-- Grid Lines -->
+                        <line x1="0" y1="25" x2="100" y2="25" stroke="#1e293b" stroke-width="0.5"
+                            stroke-dasharray="2" />
+                        <line x1="0" y1="50" x2="100" y2="50" stroke="#1e293b" stroke-width="0.5"
+                            stroke-dasharray="2" />
+                        <line x1="0" y1="75" x2="100" y2="75" stroke="#1e293b" stroke-width="0.5"
+                            stroke-dasharray="2" />
+
+                        <!-- Lines -->
+                        <polyline id="chartLineS" points="" fill="none" stroke="#38bdf8" stroke-width="1.5"
+                            vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" />
+                        <polyline id="chartLineW" points="" fill="none" stroke="#f43f5e" stroke-width="1.5"
+                            vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan: Kontrol -->
+        <div class="w-full xl:w-80 bg-slate-900/50 rounded-xl border border-slate-800 p-6 flex flex-col gap-6 h-fit">
+
+            <div class="p-4 bg-slate-800/40 rounded-lg border border-slate-700/50">
+                <div class="flex items-center gap-2 text-slate-100 font-semibold mb-2">
+                    <i data-lucide="activity" width="18" class="text-sky-400"></i>
+                    <h2>Status Parameter</h2>
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Di mode "Tak Terbatas", serigala akan lebih sulit menang karena laju reproduksi mereka diturunkan
+                    (1.5%) dibanding domba (4%).
+                </p>
+            </div>
+
+            <div class="space-y-6 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
+
+                <!-- Mode Makanan Toggle -->
+                <div class="flex items-center justify-between p-3 bg-slate-800 rounded-lg border border-slate-700">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-slate-200">Mode Makanan</span>
+                        <span id="textMode" class="text-[10px] text-slate-400">Terbatas (Rumput)</span>
+                    </div>
+                    <button id="btnToggleGrass" class="w-12 h-6 rounded-full transition-colors relative bg-emerald-500">
+                        <div id="toggleThumb"
+                            class="absolute top-1 w-4 h-4 bg-white rounded-full transition-all left-7"></div>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <h3
+                        class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 pb-1">
+                        Populasi Awal</h3>
+
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-300">Domba Awal</span>
+                            <span id="inputInitialSheepVal" class="text-slate-500 font-mono">150</span>
+                        </div>
+                        <input id="inputInitialSheep" type="range" min="0" max="300" value="150"
+                            class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400">
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-300">Serigala Awal</span>
+                            <span id="inputInitialWolvesVal" class="text-slate-500 font-mono">20</span>
+                        </div>
+                        <input id="inputInitialWolves" type="range" min="0" max="100" value="20"
+                            class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3
+                        class="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 pb-1">
+                        Parameter Biologis</h3>
+
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-300">Laju Repro Domba (%)</span>
+                            <span id="inputSheepReprodVal" class="text-slate-500 font-mono">4</span>
+                        </div>
+                        <input id="inputSheepReprod" type="range" min="0" max="20" step="0.1" value="4.0"
+                            class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400">
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-300">Laju Repro Serigala (%)</span>
+                            <span id="inputWolfReprodVal" class="text-slate-500 font-mono">1.5</span>
+                        </div>
+                        <input id="inputWolfReprod" type="range" min="0" max="20" step="0.1" value="1.5"
+                            class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400">
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-300">Metabolisme Serigala</span>
+                            <span id="inputWolfMetaVal" class="text-slate-500 font-mono">1</span>
+                        </div>
+                        <input id="inputWolfMeta" type="range" min="0.1" max="2.0" step="0.1" value="1.0"
+                            class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400">
+                    </div>
+
+                    <div class="flex flex-col gap-1 pt-2 animate-in fade-in slide-in-from-top-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-300">Waktu Tumbuh Rumput</span>
+                            <span id="inputGrassTimeVal" class="text-slate-500 font-mono">30</span>
+                        </div>
+                        <input id="inputGrassTime" type="range" min="0" max="100" value="30"
+                            class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400">
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-950/30 rounded border border-slate-800/50 space-y-3">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Energi dari Makanan</span>
+
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">Domba makan Rumput</span>
+                            <span id="inputSheepGainVal" class="text-slate-500 font-mono">4</span>
+                        </div>
+                        <input id="inputSheepGain" type="range" min="0" max="10" value="4"
+                            class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400">
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">Serigala makan Domba</span>
+                            <span id="inputWolfGainVal" class="text-slate-500 font-mono">20</span>
+                        </div>
+                        <input id="inputWolfGain" type="range" min="0" max="50" value="20"
+                            class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500 hover:accent-sky-400">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script src="js/script.js"></script>
+</body>
+
+</html>

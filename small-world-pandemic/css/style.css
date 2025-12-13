@@ -1,0 +1,301 @@
+:root {
+    /* CSS Variables akan di-update oleh JS berdasarkan tema */
+    --bg-dark: #0f172a;
+    --panel-bg: #1e293b;
+    --border: #334155;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    /* Default: No scroll di desktop */
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* --- HEADER --- */
+header {
+    background-color: var(--panel-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    flex-shrink: 0;
+    /* Header jangan menyusut */
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Controls */
+.controls-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    flex: 1;
+    align-items: center;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 100px;
+    /* Agar slider tidak gepeng */
+}
+
+.control-group label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.control-group span {
+    color: var(--accent);
+    font-weight: bold;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    max-width: 140px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    /* Target sentuh lebih besar */
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg-dark);
+    transition: transform 0.1s;
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+    transform: scale(1.2);
+}
+
+.action-group {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+    align-items: center;
+}
+
+/* Select Theme Style */
+.theme-select {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+}
+
+button {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    /* Optimasi touch */
+}
+
+button:hover {
+    filter: brightness(1.1);
+}
+
+button.primary {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+button.primary:hover {
+    filter: brightness(1.1);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* --- MAIN DASHBOARD --- */
+.dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    /* Default desktop: 2 kolom */
+    gap: 1px;
+    background-color: var(--border);
+    flex: 1;
+    min-height: 0;
+    /* Penting untuk overflow hidden container */
+    position: relative;
+}
+
+.panel {
+    background-color: var(--bg-dark);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    transition: background-color 0.3s;
+    overflow: hidden;
+}
+
+.panel-header {
+    text-align: center;
+    margin-bottom: 5px;
+    color: var(--text-muted);
+    font-size: 14px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+/* Network Canvas Area */
+#networkContainer {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Chart Area */
+#chartContainer {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+/* Overlay Stats */
+.overlay-stat {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    text-align: right;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.stat-value {
+    font-size: 48px;
+    font-weight: bold;
+    color: var(--text-main);
+    opacity: 0.1;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    opacity: 0.4;
+    text-transform: uppercase;
+}
+
+/* --- RESPONSIVE MEDIA QUERIES --- */
+@media (max-width: 900px) {
+    body {
+        height: auto;
+        /* Biarkan tumbuh vertikal */
+        min-height: 100vh;
+        overflow-y: auto;
+        /* Izinkan scroll di mobile */
+    }
+
+    header {
+        flex-wrap: wrap;
+        gap: 15px;
+        padding: 15px;
+        position: sticky;
+        /* Header nempel di atas saat scroll */
+        top: 0;
+    }
+
+    .controls-container {
+        width: 100%;
+        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        /* Grid 2 kolom untuk slider */
+    }
+
+    .control-group {
+        width: 100%;
+        min-width: 0;
+    }
+
+    input[type="range"] {
+        max-width: none;
+        /* Full width slider */
+    }
+
+    .action-group {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+        /* Tombol memenuhi lebar */
+        margin-top: 5px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .action-group button {
+        flex: 1;
+        /* Tombol sama besar */
+    }
+
+    .dashboard {
+        grid-template-columns: 1fr;
+        /* Stack 1 kolom */
+        grid-template-rows: auto auto;
+        display: block;
+        /* Block layout lebih aman untuk scroll */
+        flex: none;
+        /* Disable flex shrinking */
+    }
+
+    .panel {
+        height: 50vh;
+        /* Set tinggi fix yang nyaman di HP */
+        min-height: 350px;
+        border-bottom: 1px solid var(--border);
+    }
+}

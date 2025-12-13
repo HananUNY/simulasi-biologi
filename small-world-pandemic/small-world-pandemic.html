@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Small World Pandemic Sim</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="controls-container">
+            <div class="control-group">
+                <label>Populasi (N): <span id="valN">100</span></label>
+                <input type="range" id="paramN" min="20" max="200" step="10" value="100">
+            </div>
+
+            <div class="control-group">
+                <label>Tetangga (k): <span id="valK">4</span></label>
+                <input type="range" id="paramK" min="2" max="10" step="2" value="4">
+            </div>
+
+            <div class="control-group">
+                <label>Rewire (p): <span id="valP">0.05</span></label>
+                <input type="range" id="paramP" min="0" max="1" step="0.01" value="0.05">
+            </div>
+
+            <div class="control-group">
+                <label>Infeksi (%): <span id="valInf">20</span></label>
+                <input type="range" id="paramInf" min="1" max="100" value="20">
+            </div>
+        </div>
+
+        <div class="action-group">
+            <select id="themeSelect" class="theme-select" onchange="window.changeTheme(this.value)">
+                <option value="default">Default (Dark)</option>
+                <option value="colorblind">Colorblind (Safe)</option>
+                <option value="light">Light Mode</option>
+            </select>
+            <button class="primary" id="btnStart" onclick="window.toggleSim()">Start</button>
+            <button onclick="window.resetSim()">Reset</button>
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <!-- Left Panel: Network Visualization -->
+        <div class="panel">
+            <div class="panel-header">Jaringan Small World</div>
+            <div id="networkContainer">
+                <canvas id="netCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Right Panel: Infection Chart -->
+        <div class="panel">
+            <div class="panel-header">Kurva Penyebaran</div>
+            <div id="chartContainer">
+                <canvas id="chartCanvas"></canvas>
+            </div>
+            <div class="overlay-stat">
+                <div class="stat-value" id="dayDisplay">0</div>
+                <div class="stat-label">Hari Berlalu</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+
+</html>

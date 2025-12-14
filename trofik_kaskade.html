@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Trophic Cascade Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Custom Scrollbar for controls */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+
+        canvas {
+            cursor: crosshair;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+
+        /* Smooth Pyramid Transitions */
+        .biomass-block {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .label-text {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+
+        /* Glassmorphism for UI Panels */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #34d399;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 1px;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col p-4 gap-4">
+
+    <!-- HEADER -->
+    <header
+        class="flex justify-between items-center bg-slate-800/80 p-4 rounded-xl shadow-lg border border-slate-700/50">
+        <div>
+            <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-500">
+                biomass.cascade</h1>
+            <p class="text-xs text-slate-400 font-light tracking-wide">ECOSYSTEM DYNAMICS // DECOMPOSERS & NUTRIENT
+                CYCLE</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="sim.setScenario('balanced')"
+                class="bg-slate-700 hover:bg-emerald-600 border border-slate-600 hover:border-emerald-500 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300">
+                Balanced Ecosystem
+            </button>
+            <button onclick="sim.setScenario('collapse')"
+                class="bg-slate-700 hover:bg-red-600 border border-slate-600 hover:border-red-500 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300">
+                Remove Carnivores
+            </button>
+            <button onclick="sim.setScenario('invasive')"
+                class="bg-slate-700 hover:bg-purple-600 border border-slate-600 hover:border-purple-500 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300">
+                Invasive Species
+            </button>
+            <button onclick="sim.reset()"
+                class="group bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-2 rounded-lg transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 text-slate-400 group-hover:text-white group-hover:rotate-180 transition-transform"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT GRID -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
+
+        <!-- LEFT: SIMULATION (3 Cols) -->
+        <div class="lg:col-span-3 glass-panel rounded-xl relative flex flex-col overflow-hidden shadow-2xl">
+            <!-- Stats Overlay used for Debug/Quick Info -->
+            <div class="absolute top-4 left-4 z-10 flex flex-col gap-1 pointer-events-none">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                    <span class="text-xs text-white  drop-shadow-md">Carnivores: <span id="count-carn"
+                            class="font-mono">0</span></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></span>
+                    <span class="text-xs text-white drop-shadow-md">Herbivores: <span id="count-herb"
+                            class="font-mono">0</span></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+                    <span class="text-xs text-white drop-shadow-md">Producers: <span id="count-plant"
+                            class="font-mono">0</span></span>
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.8)]"></span>
+                    <span class="text-xs text-amber-500 drop-shadow-md font-bold">Decomposers: <span id="count-decomp"
+                            class="font-mono">0</span></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-slate-400 drop-shadow-md">Nutrients: <span id="val-nutrients"
+                            class="font-mono text-emerald-300">100%</span></span>
+                </div>
+            </div>
+
+            <canvas id="simCanvas" class="w-full h-full block"></canvas>
+        </div>
+
+        <!-- RIGHT: DASHBOARD (1 Col) -->
+        <div class="flex flex-col gap-4 min-h-0">
+
+            <!-- PYRAMID VISUALIZER -->
+            <div class="glass-panel p-5 rounded-xl shadow-lg flex flex-col h-1/2">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-semibold text-slate-200">Biomass Pyramid</h2>
+                    <span
+                        class="text-[10px] uppercase tracking-wider text-slate-500 bg-slate-800 px-2 py-1 rounded">kg/unit
+                        Area</span>
+                </div>
+
+                <div class="flex-1 flex flex-col justify-end items-center gap-1.5 w-full px-4 pb-2 relative">
+                    <!-- Grid Lines Background -->
+                    <div
+                        class="absolute inset-0 z-0 flex flex-col justify-between px-4 pb-2 opacity-10 pointer-events-none">
+                        <div class="border-b border-slate-400 w-full h-0"></div>
+                        <div class="border-b border-slate-400 w-full h-0"></div>
+                        <div class="border-b border-slate-400 w-full h-0"></div>
+                        <div class="border-b border-slate-400 w-full h-0"></div>
+                    </div>
+
+                    <!-- Blocks -->
+                    <div id="block-carnivore"
+                        class="biomass-block bg-gradient-to-br from-red-500 to-red-600 rounded-sm z-10 w-full h-[10%]">
+                        <span class="label-text text-xs font-bold text-white opacity-90">Tertiary (1%)</span>
+                    </div>
+                    <div id="block-herbivore"
+                        class="biomass-block bg-gradient-to-br from-blue-500 to-blue-600 rounded-sm z-10 w-full h-[30%]">
+                        <span class="label-text text-xs font-bold text-white opacity-90">Secondary (10%)</span>
+                    </div>
+                    <div id="block-producer"
+                        class="biomass-block bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-sm z-10 w-full h-[60%]">
+                        <span class="label-text text-xs font-bold text-white opacity-90">Primary (100%)</span>
+                    </div>
+                </div>
+
+                <!-- Decomposer Cycler (Visual Only) -->
+                <div class="mt-2 flex items-center justify-center gap-2 text-[10px] text-slate-400">
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 bg-amber-600 rounded-full animate-pulse"></div>
+                        <span>Decomposers Recycling</span>
+                    </div>
+                    <span>→</span>
+                    <div class="flex items-center gap-1">
+                        <span class="text-emerald-400 font-bold">Nutrients</span>
+                    </div>
+                </div>
+
+                <div id="status-message" class="mt-2 text-center text-xs text-orange-400 animate-pulse font-mono h-4">
+                    <!-- Status Updates -->
+                </div>
+            </div>
+
+            <!-- CONTROLS -->
+            <div class="glass-panel p-5 rounded-xl shadow-lg flex flex-col gap-4 h-1/2 overflow-y-auto">
+                <h2
+                    class="text-xs font-semibold text-slate-400 uppercase tracking-widest border-b border-slate-700 pb-2">
+                    Parameters</h2>
+
+                <!-- Control Item -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300">Plant Growth Rate</span>
+                        <span id="val-growth" class="text-emerald-400 font-mono">1.0x</span>
+                    </div>
+                    <input type="range" id="growthWrapper" min="0" max="100" value="20" class="accent-emerald-500">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300">Herbivore Hunger</span>
+                        <span id="val-hunger" class="text-blue-400 font-mono">Normal</span>
+                    </div>
+                    <input type="range" id="hungerWrapper" min="0" max="100" value="30">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300">Herbivore Reproduction</span>
+                        <span id="val-repro" class="text-purple-400 font-mono">Normal</span>
+                    </div>
+                    <input type="range" id="reproWrapper" min="1" max="100" value="60">
+                </div>
+
+                <div class="mt-auto pt-2 border-t border-slate-700">
+                    <div class="text-[10px] text-slate-500 leading-relaxed">
+                        <strong class="text-slate-400">Biological Note:</strong> The 10% Rule implies that only ~10% of
+                        energy is passed to the next trophic level. Waste/Death is recycled by Decomposers.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /**
+         * VECTOR UTILS
+         * Basic 2D Vector Math for Boids Physics
+         */
+        class Vector {
+            constructor(x, y) { this.x = x; this.y = y; }
+            add(v) { this.x += v.x; this.y += v.y; return this; }
+            sub(v) { this.x -= v.x; this.y -= v.y; return this; }
+            mult(n) { this.x *= n; this.y *= n; return this; }
+            div(n) { this.x /= n; this.y /= n; return this; }
+            mag() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+            normalize() {
+                let m = this.mag();
+                if (m !== 0) { this.div(m); }
+                return this;
+            }
+            limit(max) {
+                if (this.mag() > max) { this.normalize(); this.mult(max); }
+                return this;
+            }
+            static dist(v1, v2) { return Math.hypot(v1.x - v2.x, v1.y - v2.y); }
+            copy() { return new Vector(this.x, this.y); }
+        }
+
+        // OPTIMIZATION: Spatial Hash Grid
+        class SpatialHash {
+            constructor(cellSize) {
+                this.cellSize = cellSize;
+                this.grid = new Map();
+            }
+
+            getKey(x, y) {
+                const cx = Math.floor(x / this.cellSize);
+                const cy = Math.floor(y / this.cellSize);
+                return `${cx},${cy}`;
+            }
+
+            insert(entity) {
+                const x = entity.pos ? entity.pos.x : entity.x;
+                const y = entity.pos ? entity.pos.y : entity.y;
+                const key = this.getKey(x, y);
+                if (!this.grid.has(key)) {
+                    this.grid.set(key, []);
+                }
+                this.grid.get(key).push(entity);
+            }
+
+            query(x, y, radius) {
+                const results = [];
+                const cx = Math.floor(x / this.cellSize);
+                const cy = Math.floor(y / this.cellSize);
+                const r = Math.ceil(radius / this.cellSize);
+
+                for (let i = cx - r; i <= cx + r; i++) {
+                    for (let j = cy - r; j <= cy + r; j++) {
+                        const key = `${i},${j}`;
+                        if (this.grid.has(key)) {
+                            const params = this.grid.get(key);
+                            for (let k = 0; k < params.length; k++) {
+                                results.push(params[k]);
+                            }
+                        }
+                    }
+                }
+                return results;
+            }
+        }
+
+        /**
+         * CONFIG
+         */
+        const CONFIG = {
+            width: 0, height: 0,
+            plantGrowthRate: 0.40, // Buffed Plants (was 0.20)
+            herbivoreHunger: 0.20, // Increased from 0.12 (Starve faster)
+            carnivoreHunger: 0.35, // Increased significantly from 0.18 (Starve faster)
+            herbivoreReproRate: 0.5,
+            maxHerbivores: 450, // Raised Cap (Natural balance should keep it lower)
+            maxCarnivores: 140, // Increased Cap to allow "Bonfire" control
+            maxPlants: 2500, // Raised Plant Cap
+            flocking: {
+                align: 1.0,
+                cohesion: 0.8,
+                separation: 1.2
+            }
+        };
+
+        /**
+         * ENTITY SYSTEM
+         */
+        class Entity {
+            constructor(x, y) {
+                this.pos = new Vector(x, y);
+                this.vel = new Vector(Math.random() * 2 - 1, Math.random() * 2 - 1);
+                this.acc = new Vector(0, 0);
+                this.maxSpeed = 2;
+                this.maxForce = 0.05;
+                this.r = 4;
+                this.alive = true;
+                this.energy = 100;
+                this.maxEnergy = 200;
+            }
+
+            // Standard physics update
+            update() {
+                this.vel.add(this.acc);
+                this.vel.limit(this.maxSpeed);
+                this.pos.add(this.vel);
+                this.acc.mult(0); // Reset acceleration
+
+                // Wraparound (Toroidal world)
+                if (this.pos.x < 0) this.pos.x = CONFIG.width;
+                if (this.pos.x > CONFIG.width) this.pos.x = 0;
+                if (this.pos.y < 0) this.pos.y = CONFIG.height;
+                if (this.pos.y > CONFIG.height) this.pos.y = 0;
+
+                // Metabolic Cost
+                this.energy -= this.getMetabolicRate();
+                if (this.energy <= 0) this.alive = false;
+            }
+
+            applyForce(force) {
+                this.acc.add(force);
+            }
+
+            getMetabolicRate() { return 0.1; } // Base
+
+            draw(ctx) { }
+        }
+
+        // New Class: Decomposer (Fungi/Backteria)
+        class Decomposer {
+            constructor(x, y) {
+                this.pos = new Vector(x, y);
+                this.vx = (Math.random() - 0.5) * 0.5; // Very slow drift
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+                this.life = 500; // Frames before disappearing
+            }
+            update(matterList) {
+                this.pos.x += this.vx;
+                this.pos.y += this.vy;
+                this.life--;
+
+                // Boundaries
+                if (this.pos.x < 0) this.pos.x = CONFIG.width;
+                if (this.pos.x > CONFIG.width) this.pos.x = 0;
+                if (this.pos.y < 0) this.pos.y = CONFIG.height;
+                if (this.pos.y > CONFIG.height) this.pos.y = 0;
+            }
+            draw(ctx) {
+                ctx.fillStyle = `rgba(180, 83, 9, ${this.life / 500})`; // Amber-ish
+                ctx.beginPath();
+                ctx.arc(this.pos.x, this.pos.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // New Class: Organic Matter (Dead bodies/Waste)
+        class OrganicMatter {
+            constructor(x, y, value) {
+                this.pos = new Vector(x, y);
+                this.value = value; // Nutrient value
+                this.decay = 0;
+            }
+            draw(ctx) {
+                ctx.fillStyle = '#4b5563'; // Gray
+                ctx.beginPath();
+                ctx.arc(this.pos.x, this.pos.y, 3 + (this.value / 20), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Plant {
+            constructor(x, y, size = 1) {
+                this.x = x; this.y = y;
+                this.size = size;
+                this.maxSize = 8;
+                this.alive = true;
+            }
+            grow(nutrientFactor) {
+                if (this.size < this.maxSize) {
+                    // Growth depends on global nutrients!
+                    this.size += CONFIG.plantGrowthRate * nutrientFactor;
+                }
+            }
+            draw(ctx) {
+                ctx.fillStyle = `rgba(16, 185, 129, ${0.3 + (this.size / 8) * 0.7})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Herbivore extends Entity {
+            constructor(x, y, isInvasive = false) {
+                super(x, y);
+                this.isInvasive = isInvasive;
+                this.maxSpeed = isInvasive ? 3.0 : 2.0;
+                this.color = isInvasive ? '#a855f7' : '#3b82f6';
+                this.r = isInvasive ? 6 : 4;
+                this.maxForce = 0.04;
+                this.energy = 100; // Start lower (Survive first)
+                this.maxEnergy = 200;
+                this.seeds = 0; // Stored seeds
+            }
+
+            getMetabolicRate() {
+                // Dynamic Metabolism: Basal Rate + Movement Cost
+                // Moving fast burns SIGNIFICANT energy now!
+                let speedCost = this.vel.mag() * 0.15; // increased from 0.05
+                let baseRate = this.isInvasive ? CONFIG.herbivoreHunger * 1.5 : CONFIG.herbivoreHunger;
+                return baseRate + speedCost;
+            }
+
+            // Complex Behavior: Flocking + Flee + Eat + SEED DISPERSAL
+            behaviors(gridHerbivores, gridCarnivores, gridPlants, allPlantsArray) {
+
+                // Query Grids for Neighbors ONE TIME
+                // Optimizes performance by avoiding re-querying inside each method
+                let nearbyBoids = gridHerbivores.query(this.pos.x, this.pos.y, 50);
+                let nearbyPredators = gridCarnivores.query(this.pos.x, this.pos.y, 100);
+                let nearbyPlants = gridPlants.query(this.pos.x, this.pos.y, 100);
+
+                let separate = this.separate(nearbyBoids);
+                let align = this.align(nearbyBoids);
+                let cohesion = this.cohesion(nearbyBoids);
+                let flee = this.flee(nearbyPredators);
+                let eat = this.seekFood(nearbyPlants);
+
+                // Weights
+                separate.mult(CONFIG.flocking.separation * 1.5);
+                align.mult(CONFIG.flocking.align);
+                cohesion.mult(CONFIG.flocking.cohesion);
+                flee.mult(4.0);
+                eat.mult(2.5);
+
+                this.applyForce(separate);
+                if (!this.isInvasive) {
+                    this.applyForce(align);
+                    this.applyForce(cohesion);
+                }
+                this.applyForce(flee);
+                this.applyForce(eat);
+
+                // ZOOCHORY: Drop Seeds
+                if (this.seeds > 0 && Math.random() < 0.05) { // BUFF: faster dropping (was 0.02)
+                    this.seeds--;
+                    allPlantsArray.push(new Plant(this.pos.x, this.pos.y, 0.5));
+                }
+            }
+
+            // BOIDS: Separation
+            separate(boids) {
+                let steering = new Vector(0, 0);
+                let total = 0;
+                let perceptionRadius = 25;
+                for (let other of boids) {
+                    let d = Vector.dist(this.pos, other.pos);
+                    if (other !== this && d < perceptionRadius && d > 0.001) {
+                        let diff = new Vector(this.pos.x - other.pos.x, this.pos.y - other.pos.y);
+                        diff.normalize();
+                        diff.div(d);
+                        steering.add(diff);
+                        total++;
+                    }
+                }
+                if (total > 0) {
+                    steering.div(total);
+                    steering.normalize();
+                    steering.mult(this.maxSpeed);
+                    steering.sub(this.vel);
+                    steering.limit(this.maxForce);
+                }
+                return steering;
+            }
+
+            // BOIDS: Alignment
+            align(boids) {
+                let perceptionRadius = 50;
+                let steering = new Vector(0, 0);
+                let total = 0;
+                for (let other of boids) {
+                    let d = Vector.dist(this.pos, other.pos);
+                    if (other !== this && d < perceptionRadius) {
+                        steering.add(other.vel);
+                        total++;
+                    }
+                }
+                if (total > 0) {
+                    steering.div(total);
+                    steering.normalize();
+                    steering.mult(this.maxSpeed);
+                    steering.sub(this.vel);
+                    steering.limit(this.maxForce);
+                }
+                return steering;
+            }
+
+            // BOIDS: Cohesion
+            cohesion(boids) {
+                let perceptionRadius = 50;
+                let steering = new Vector(0, 0);
+                let total = 0;
+                for (let other of boids) {
+                    let d = Vector.dist(this.pos, other.pos);
+                    if (other !== this && d < perceptionRadius) {
+                        steering.add(other.pos);
+                        total++;
+                    }
+                }
+                if (total > 0) {
+                    steering.div(total);
+                    steering.sub(this.pos); // Seek target
+                    steering.normalize();
+                    steering.mult(this.maxSpeed);
+                    steering.sub(this.vel);
+                    steering.limit(this.maxForce);
+                }
+                return steering;
+            }
+
+            flee(carnivores) {
+                let steering = new Vector(0, 0);
+                let perceptionRadius = 100;
+                let closest = null;
+                let closeDist = Infinity;
+
+                for (let c of carnivores) {
+                    let d = Vector.dist(this.pos, c.pos);
+                    if (d < perceptionRadius && d < closeDist) {
+                        closeDist = d;
+                        closest = c;
+                    }
+                }
+
+                if (closest) {
+                    let diff = new Vector(this.pos.x - closest.pos.x, this.pos.y - closest.pos.y);
+                    diff.normalize();
+                    diff.mult(this.maxSpeed);
+                    steering = diff.sub(this.vel);
+                    steering.limit(this.maxForce * 2);
+                }
+                return steering;
+            }
+
+            seekFood(plants) {
+                let steering = new Vector(0, 0);
+                let perceptionRadius = 100;
+                let closest = null;
+                let closeDist = Infinity;
+
+                for (let p of plants) {
+                    let d = Math.hypot(this.pos.x - p.x, this.pos.y - p.y);
+                    if (d < perceptionRadius && d < closeDist) {
+                        closeDist = d;
+                        closest = p;
+                    }
+                }
+
+                if (closest) {
+                    if (closeDist < 5) {
+                        this.energy += 50; // Big meal (Thrive!)
+                        if (this.energy > this.maxEnergy) this.energy = this.maxEnergy;
+                        closest.alive = false;
+                        this.seeds += 6;
+                        return new Vector(0, 0);
+                    }
+
+                    // Otherwise seek
+                    let target = new Vector(closest.x, closest.y);
+                    let desired = target.sub(this.pos);
+                    desired.normalize();
+                    desired.mult(this.maxSpeed);
+                    steering = desired.sub(this.vel);
+                    steering.limit(this.maxForce);
+                }
+                return steering;
+            }
+
+            draw(ctx) {
+                let angle = Math.atan2(this.vel.y, this.vel.x);
+                ctx.save();
+                ctx.translate(this.pos.x, this.pos.y);
+                ctx.rotate(angle);
+
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(this.r * 2, 0);
+                ctx.lineTo(-this.r, -this.r);
+                ctx.lineTo(-this.r, this.r);
+                ctx.closePath();
+                ctx.fill();
+
+                if (this.isInvasive) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class Carnivore extends Entity {
+            constructor(x, y) {
+                super(x, y);
+                this.maxSpeed = 3.2; // Buffed Speed (was 2.6)
+                this.color = '#ef4444';
+                this.r = 6;
+                this.maxForce = 0.2; // Buffed Agility (was 0.12)
+                this.energy = 150;
+            }
+
+            getMetabolicRate() {
+                // Dynamic Metabolism for Carnivores too
+                // Chasing burns massive energy
+                let speedCost = this.vel.mag() * 0.2;
+                return CONFIG.carnivoreHunger + speedCost;
+            }
+
+            behaviors(gridHerbivores) {
+                let hunt = this.hunt(gridHerbivores);
+                this.applyForce(hunt);
+            }
+
+            hunt(grid) {
+                let steering = new Vector(0, 0);
+                let perceptionRadius = 300;
+                let closest = null;
+                let closeDist = Infinity;
+
+                // OPTIMIZED: Query Grid
+                let potentialPrey = grid.query(this.pos.x, this.pos.y, perceptionRadius);
+
+                for (let h of potentialPrey) {
+                    let d = Vector.dist(this.pos, h.pos);
+                    if (d < perceptionRadius && d < closeDist) {
+                        closeDist = d;
+                        closest = h;
+                    }
+                }
+
+                if (closest) {
+                    if (closeDist < 10) {
+                        // Eat
+                        this.energy += 80;
+                        if (this.energy > this.maxEnergy) this.energy = this.maxEnergy;
+                        closest.alive = false;
+                        // NO ORGANIC MATTER LEFT, CONSUMED WHOLLY
+                    } else {
+                        // Chase
+                        let target = closest.pos.copy();
+                        let predict = closest.vel.copy();
+                        predict.mult(10);
+                        target.add(predict);
+
+                        let desired = target.sub(this.pos);
+                        desired.normalize();
+                        desired.mult(this.maxSpeed);
+                        steering = desired.sub(this.vel);
+                        steering.limit(this.maxForce);
+                    }
+                } else {
+                    // Wander if no food
+                    if (Math.random() < 0.05) {
+                        let wander = new Vector(Math.random() * 2 - 1, Math.random() * 2 - 1);
+                        wander.normalize().mult(this.maxForce * 5);
+                        this.applyForce(wander);
+                    }
+                }
+                return steering;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.pos.x, this.pos.y);
+
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(2, -2, 2, 0, Math.PI * 2);
+                ctx.arc(2, 2, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        // Spatial Hashing for efficient neighbor lookups
+
+
+        /**
+         * SIMULATION ENGINE
+         */
+        const sim = {
+            canvas: document.getElementById('simCanvas'),
+            ctx: document.getElementById('simCanvas').getContext('2d'),
+            plants: [],
+            herbivores: [],
+            carnivores: [],
+            decomposers: [],
+            organicMatter: [],
+            globalNutrients: 100, // 0-100 scale
+            animationId: null,
+
+            // Camera State
+            camera: { x: 0, y: 0, scale: 1 },
+            isDragging: false,
+            lastMouse: { x: 0, y: 0 },
+
+            init: function () {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+
+                // Camera Controls
+                this.canvas.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const zoomSensitivity = 0.001;
+                    const delta = -e.deltaY * zoomSensitivity;
+                    const oldScale = this.camera.scale;
+                    let newScale = oldScale + delta;
+
+                    // Clamp Zoom
+                    if (newScale < 0.1) newScale = 0.1;
+                    if (newScale > 5) newScale = 5;
+
+                    // Zoom towards mouse pointer
+                    const rect = this.canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+
+                    // Calculate world point under mouse
+                    const worldX = (mouseX - this.camera.x) / oldScale;
+                    const worldY = (mouseY - this.camera.y) / oldScale;
+
+                    // Update scale
+                    this.camera.scale = newScale;
+
+                    // Adjust camera position to keep world point steady
+                    this.camera.x = mouseX - worldX * newScale;
+                    this.camera.y = mouseY - worldY * newScale;
+                });
+
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) { // Left click to drag
+                        this.isDragging = true;
+                        this.lastMouse = { x: e.clientX, y: e.clientY };
+                    }
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (this.isDragging) {
+                        const dx = e.clientX - this.lastMouse.x;
+                        const dy = e.clientY - this.lastMouse.y;
+                        this.camera.x += dx;
+                        this.camera.y += dy;
+                        this.lastMouse = { x: e.clientX, y: e.clientY };
+                    }
+                });
+
+                window.addEventListener('mouseup', () => {
+                    this.isDragging = false;
+                });
+
+                this.canvas.addEventListener('dblclick', () => {
+                    // Reset View
+                    this.camera = { x: 0, y: 0, scale: 1 };
+                });
+
+                // Spawning (Right Click or Modified Click)
+                this.canvas.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const rect = this.canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+
+                    // Convert Screen -> World
+                    const worldX = (mouseX - this.camera.x) / this.camera.scale;
+                    const worldY = (mouseY - this.camera.y) / this.camera.scale;
+
+                    this.herbivores.push(new Herbivore(worldX, worldY));
+                });
+
+                // Inputs
+                document.getElementById('growthWrapper').addEventListener('input', (e) => {
+                    CONFIG.plantGrowthRate = e.target.value / 400; // range 0 - 0.25
+                    document.getElementById('val-growth').innerText = (CONFIG.plantGrowthRate * 20).toFixed(1) + 'x';
+                });
+                document.getElementById('hungerWrapper').addEventListener('input', (e) => {
+                    CONFIG.herbivoreHunger = e.target.value / 100;
+                    document.getElementById('val-hunger').innerText = Math.round(e.target.value) + '%';
+                });
+                document.getElementById('reproWrapper').addEventListener('input', (e) => {
+                    CONFIG.herbivoreReproRate = e.target.value / 100; // Probability factor
+                    document.getElementById('val-repro').innerText = Math.round(e.target.value) + '%';
+                });
+
+                // REMOVED OLD MOUSEDOWN SPAWNER (Handled in Camera Logic contextmenu now)
+
+                this.setScenario('balanced');
+                this.loop();
+            },
+
+            resize: function () {
+                const parent = this.canvas.parentElement;
+                this.canvas.width = parent.clientWidth;
+                this.canvas.height = parent.clientHeight;
+                CONFIG.width = this.canvas.width;
+                CONFIG.height = this.canvas.height;
+            },
+
+            setScenario: function (type) {
+                this.plants = [];
+                this.herbivores = [];
+                this.carnivores = [];
+                this.decomposers = [];
+                this.organicMatter = [];
+                this.globalNutrients = 100;
+
+                const msg = document.getElementById('status-message');
+
+                // Base Plants
+                for (let i = 0; i < 600; i++) {
+                    this.plants.push(new Plant(Math.random() * CONFIG.width, Math.random() * CONFIG.height, Math.random() * 8));
+                }
+
+                // Base Decomposers
+                for (let i = 0; i < 50; i++) {
+                    this.decomposers.push(new Decomposer(Math.random() * CONFIG.width, Math.random() * CONFIG.height));
+                }
+
+                if (type === 'balanced') {
+                    for (let i = 0; i < 25; i++) this.herbivores.push(new Herbivore(Math.random() * CONFIG.width, Math.random() * CONFIG.height));
+                    for (let i = 0; i < 8; i++) this.carnivores.push(new Carnivore(Math.random() * CONFIG.width, Math.random() * CONFIG.height)); // Start with 8
+                    msg.innerText = "SCENARIO: BALANCED ECOSYSTEM";
+                    msg.className = "mt-2 text-center text-xs text-emerald-400 font-mono h-4";
+                }
+                else if (type === 'collapse') {
+                    for (let i = 0; i < 60; i++) this.herbivores.push(new Herbivore(Math.random() * CONFIG.width, Math.random() * CONFIG.height));
+                    msg.innerText = "SCENARIO: TROPHIC CASCADE (NO PREDATORS)";
+                    msg.className = "mt-2 text-center text-xs text-red-400 font-mono h-4 animate-pulse";
+                }
+                else if (type === 'invasive') {
+                    for (let i = 0; i < 40; i++) this.herbivores.push(new Herbivore(Math.random() * CONFIG.width, Math.random() * CONFIG.height));
+                    for (let i = 0; i < 5; i++) this.carnivores.push(new Carnivore(Math.random() * CONFIG.width, Math.random() * CONFIG.height));
+                    // 10 Super Herbivores
+                    for (let i = 0; i < 15; i++) this.herbivores.push(new Herbivore(Math.random() * CONFIG.width, Math.random() * CONFIG.height, true));
+                    msg.innerText = "SCENARIO: INVASIVE SPECIES INTRODUCED";
+                    msg.className = "mt-2 text-center text-xs text-purple-400 font-mono h-4";
+                }
+            },
+
+            update: function () {
+                // OPTIMIZATION: Rebuild Grids
+                // Cell 50 works for flocking (r=50) and plant search (r=100)
+                // Use slightly larger cell for efficiency
+                let gridHerb = new SpatialHash(100);
+                let gridCarn = new SpatialHash(100);
+                let gridPlant = new SpatialHash(100);
+
+                this.herbivores.forEach(h => gridHerb.insert(h));
+                this.carnivores.forEach(c => gridCarn.insert(c));
+                this.plants.forEach(p => gridPlant.insert(p));
+
+                // 1. PLANTS & SEED SYSTEM
+                // Old: Random global spawning -> REMOVED
+                // New: Vegetative Spread (Slow)
+                this.plants.forEach(p => {
+                    // Growth from nutrients
+                    let nutrientFactor = 0.2 + (this.globalNutrients / 100) * 2.0; // Stronger nutrient impact
+                    p.grow(nutrientFactor);
+                    if (Math.random() < 0.001) this.globalNutrients -= 0.01;
+
+                    // Vegetative Reproduction (Cloning nearby) - Buffed
+                    if (this.plants.length < CONFIG.maxPlants && p.size >= p.maxSize && Math.random() < 0.015) { // Faster Spread (0.008 -> 0.015)
+                        let offX = p.x + (Math.random() - 0.5) * 50;
+                        let offY = p.y + (Math.random() - 0.5) * 50;
+                        // Boundary check
+                        if (offX > 0 && offX < CONFIG.width && offY > 0 && offY < CONFIG.height) {
+                            this.plants.push(new Plant(offX, offY, 1));
+                        }
+                    }
+                });
+
+                if (this.globalNutrients < 0) this.globalNutrients = 0;
+
+                // 2. Herbivores
+                for (let i = this.herbivores.length - 1; i >= 0; i--) {
+                    let h = this.herbivores[i];
+                    // Pass Grids instead of Full Arrays
+                    h.behaviors(gridHerb, gridCarn, gridPlant, this.plants);
+                    h.update();
+
+                    // Reproduce - STRICTLY LUXURY
+                    // Can only reproduce if energy is very high (Thriving)
+                    if (this.herbivores.length < CONFIG.maxHerbivores && h.energy > 160 && Math.random() < 0.02 * CONFIG.herbivoreReproRate) { // Increased threshold 150->160
+                        h.energy -= 80; // Increased Cost 60 -> 80
+                        this.herbivores.push(new Herbivore(h.pos.x, h.pos.y, h.isInvasive));
+                    }
+
+                    if (!h.alive) {
+                        // Spawn Decay
+                        this.organicMatter.push(new OrganicMatter(h.pos.x, h.pos.y, 20));
+                        // INSTANT DECOMPOSER SPAWN
+                        for (let k = 0; k < 2; k++) this.decomposers.push(new Decomposer(h.pos.x + (Math.random() - 0.5) * 10, h.pos.y + (Math.random() - 0.5) * 10));
+                        this.herbivores.splice(i, 1);
+                    }
+                }
+
+                // 3. Carnivores
+                for (let i = this.carnivores.length - 1; i >= 0; i--) {
+                    let c = this.carnivores[i];
+                    c.behaviors(gridHerb);
+                    c.update();
+                    // Reproduce - REACTIVE
+                    // If well fed (high energy), reproduce aggressively to counter prey booms
+                    let reproChance = 0.005;
+                    if (c.energy > 190) reproChance = 0.05; // 10x chance if full
+
+                    if (this.carnivores.length < CONFIG.maxCarnivores && c.energy > 160 && Math.random() < reproChance) {
+                        c.energy -= 80;
+                        this.carnivores.push(new Carnivore(c.pos.x, c.pos.y));
+                    }
+
+                    if (!c.alive) {
+                        // Spawn Decay
+                        this.organicMatter.push(new OrganicMatter(c.pos.x, c.pos.y, 40));
+                        // INSTANT DECOMPOSER SPAWN
+                        for (let k = 0; k < 4; k++) this.decomposers.push(new Decomposer(c.pos.x + (Math.random() - 0.5) * 10, c.pos.y + (Math.random() - 0.5) * 10));
+                        this.carnivores.splice(i, 1);
+                    }
+                }
+
+                // 4. Decomposers & Matter
+                // Matter decays naturally or gets eaten
+                for (let i = this.organicMatter.length - 1; i >= 0; i--) {
+                    let m = this.organicMatter[i];
+                    m.decay++;
+                    if (m.decay > 300) { // Faster decay (was 500)
+                        // Dissolve into soil (Nutrients+)
+                        this.globalNutrients += (m.value / 10);
+                        this.organicMatter.splice(i, 1);
+                    }
+                }
+
+                // Decomposers seek matter
+                this.decomposers.forEach(d => {
+                    d.update();
+                    // Simple interaction: if persistent nearby matter, multiply
+                    if (this.organicMatter.length > 0 && Math.random() < 0.01) {
+                        // Find nearest
+                        // If close, "eat" and boost global nutrients
+                        // For simplicity, just boost nutrient randomly if matter exists
+                        this.globalNutrients += 0.05;
+                    }
+                });
+                if (this.globalNutrients > 100) this.globalNutrients = 100;
+
+                // Spawn decomposers if plenty of matter
+                if (this.organicMatter.length > 5 && this.decomposers.length < 100 && Math.random() < 0.05) {
+                    this.decomposers.push(new Decomposer(Math.random() * CONFIG.width, Math.random() * CONFIG.height));
+                }
+
+                // Clean dead plants
+                this.plants = this.plants.filter(p => p.alive);
+
+                this.updateUI();
+            },
+
+            draw: function () {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clear Screen
+
+                this.ctx.save();
+                // Apply Camera Transform
+                this.ctx.translate(this.camera.x, this.camera.y);
+                this.ctx.scale(this.camera.scale, this.camera.scale);
+
+                // Draw World Boundary (Visual Guide)
+                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(0, 0, CONFIG.width, CONFIG.height);
+
+                this.plants.forEach(p => p.draw(this.ctx));
+                this.organicMatter.forEach(m => m.draw(this.ctx));
+                this.decomposers.forEach(d => d.draw(this.ctx));
+                this.herbivores.forEach(h => h.draw(this.ctx));
+                this.carnivores.forEach(c => c.draw(this.ctx));
+
+                this.ctx.restore();
+            },
+
+            updateUI: function () {
+                const plantMass = this.plants.reduce((t, p) => t + p.size, 0);
+                const herbMass = this.herbivores.length * 20;
+                const carnMass = this.carnivores.length * 50;
+
+                document.getElementById('count-plant').innerText = this.plants.length;
+                document.getElementById('count-herb').innerText = this.herbivores.length;
+                document.getElementById('count-carn').innerText = this.carnivores.length;
+                document.getElementById('count-decomp').innerText = this.decomposers.length;
+                document.getElementById('val-nutrients').innerText = Math.floor(this.globalNutrients) + '%';
+
+                // Colorize nutrients
+                let nutEl = document.getElementById('val-nutrients');
+                if (this.globalNutrients > 70) nutEl.className = "font-mono text-emerald-300";
+                else if (this.globalNutrients > 30) nutEl.className = "font-mono text-yellow-300";
+                else nutEl.className = "font-mono text-red-400";
+
+                const MAX_PLANT = 3500;
+                const MAX_HERB = 350; // Adjusted for 10% rule roughly
+                const MAX_CARN = 35;  // Adjusted for 1% rule roughly
+
+                const pW = Math.min((plantMass / MAX_PLANT) * 100, 100);
+                const hW = Math.min((herbMass / MAX_HERB) * 100, 100);
+                const cW = Math.min((carnMass / MAX_CARN) * 100, 100);
+
+                document.getElementById('block-producer').style.width = `${Math.max(pW, 5)}%`;
+                document.getElementById('block-herbivore').style.width = `${Math.max(hW, 5)}%`;
+                document.getElementById('block-carnivore').style.width = `${Math.max(cW, 0)}%`;
+
+                if (pW < 20) {
+                    document.getElementById('block-producer').classList.remove('from-emerald-500', 'to-emerald-600');
+                    document.getElementById('block-producer').classList.add('from-amber-700', 'to-amber-800');
+                } else {
+                    document.getElementById('block-producer').classList.add('from-emerald-500', 'to-emerald-600');
+                    document.getElementById('block-producer').classList.remove('from-amber-700', 'to-amber-800');
+                }
+            },
+
+            loop: function () {
+                this.update();
+                this.draw();
+                this.animationId = requestAnimationFrame(() => this.loop());
+            }
+        };
+
+        window.onload = () => sim.init();
+
+    </script>
+</body>
+
+</html>

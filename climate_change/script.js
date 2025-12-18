@@ -599,6 +599,19 @@ function exportData() {
     document.body.removeChild(link);
 }
 
+function exportImage() {
+    // Combine background and line graph
+    // Since we have a transparent graph layer over a BG, we can just grab the graphCanvas for the line
+    // But to get the full context (axis lines etc) which are on the same canvas, it works.
+    // However, if we want the "Temperature History" context we might just snapshot the canvas.
+
+    // Simple download of the graph canvas
+    const link = document.createElement('a');
+    link.download = 'climate_graph.png';
+    link.href = graphCanvas.toDataURL();
+    link.click();
+}
+
 // --- Logic & Draw Separation for Speed Control ---
 
 function updateModel() {

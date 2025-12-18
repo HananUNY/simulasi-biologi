@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate Change Simulation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="glass-header h-16 flex items-center justify-between px-6 z-20 shrink-0">
+        <div class="flex items-center gap-3">
+            <div
+                class="h-8 w-8 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h1
+                    class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-emerald-400 tracking-tight">
+                    Climate Model</h1>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Atmospheric Simulation</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div
+                class="px-4 py-1.5 rounded-full bg-slate-800/50 border border-slate-700 backdrop-blur-sm flex items-center gap-2">
+                <span class="text-xs text-slate-400 uppercase tracking-wider font-bold">Global Temp</span>
+                <span id="current-temp" class="text-sm font-mono font-bold text-white">12.0</span>
+                <span class="text-xs text-slate-400">°C</span>
+            </div>
+            <button onclick="resetSim()"
+                class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-lg shadow-indigo-500/30 transition-all active:scale-95 flex items-center gap-2">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                    </path>
+                </svg>
+                RESET
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Simulation Canvas Area -->
+        <div class="flex-1 relative bg-slate-900 group">
+            <canvas id="simCanvas" class="w-full h-full object-cover"></canvas>
+
+            <!-- Overlay Stats (Optional) -->
+            <div
+                class="absolute top-4 left-4 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <!-- Can add extra graphical stats here if needed -->
+            </div>
+        </div>
+
+        <!-- Right Controls Sidebar -->
+        <div
+            class="w-80 glass-panel border-l border-slate-700/50 flex flex-col shrink-0 z-10 transition-all duration-300">
+
+            <!-- Parameters Section -->
+            <div class="p-5 overflow-y-auto flex-1 space-y-6">
+                <!-- Follow Ray Feature -->
+                <div class="bg-indigo-900/40 rounded-lg p-3 border border-indigo-500/30">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">Research
+                            Tool</label>
+                        <span id="track-status"
+                            class="text-[10px] font-mono text-white bg-indigo-500/50 px-2 py-0.5 rounded opacity-0 transition-opacity">Tracking...</span>
+                    </div>
+                    <button id="btn-follow" onclick="toggleFollow()"
+                        class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-md transition-all flex items-center justify-center gap-2">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                            </path>
+                        </svg>
+                        Follow Energy
+                    </button>
+                    <p class="text-[9px] text-indigo-200/60 mt-2 leading-tight text-center">Track a single photon's
+                        journey from the sun to space.</p>
+                </div>
+
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-700 pb-2">
+                    Atmosphere Control</h3>
+
+                <!-- Sun Brightness -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-end">
+                        <label class="text-xs font-medium text-slate-300">Sun Brightness</label>
+                        <span id="val-sun" class="text-xs font-mono text-yellow-400 font-bold">1.0</span>
+                    </div>
+                    <input type="range" id="sun-brightness" min="0" max="5" step="0.1" value="1.0"
+                        class="accent-yellow-500">
+                    <div class="flex justify-between text-[10px] text-slate-600">
+                        <span>Dim</span>
+                        <span>Intense</span>
+                    </div>
+                </div>
+
+                <!-- Albedo -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-end">
+                        <label class="text-xs font-medium text-slate-300">Albedo (Reflection)</label>
+                        <span id="val-albedo" class="text-xs font-mono text-emerald-400 font-bold">0.6</span>
+                    </div>
+                    <input type="range" id="albedo" min="0" max="1" step="0.05" value="0.6">
+                </div>
+
+                <!-- CO2 -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-end">
+                        <label class="text-xs font-medium text-slate-300">Atmospheric CO₂</label>
+                        <span id="val-co2" class="text-xs font-mono text-green-400 font-bold">25</span>
+                    </div>
+                    <input type="range" id="co2-amount" min="0" max="250" step="5" value="25">
+                    <p class="text-[10px] text-slate-500 leading-tight">Greenhouse gases trap IR radiation, preventing
+                        heat from escaping.</p>
+                </div>
+
+                <!-- Clouds -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-end">
+                        <label class="text-xs font-medium text-slate-300">Cloud Cover</label>
+                        <span id="val-clouds" class="text-xs font-mono text-cyan-400 font-bold">1</span>
+                    </div>
+                    <input type="range" id="clouds-amount" min="0" max="5" step="1" value="1">
+                </div>
+
+                <!-- Speed -->
+                <div class="space-y-2 pt-4 border-t border-slate-700/50">
+                    <div class="flex justify-between items-end">
+                        <label class="text-xs font-medium text-slate-300">Sim Speed</label>
+                        <span id="val-speed" class="text-xs font-mono text-indigo-400 font-bold">1x</span>
+                    </div>
+                    <input type="range" id="sim-speed" min="1" max="10" step="1" value="1">
+                </div>
+
+                <!-- Legend -->
+                <div class="bg-slate-800/50 rounded-lg p-3 space-y-2 border border-slate-700/50">
+                    <h4 class="text-[10px] font-bold text-slate-500 uppercase mb-2">Legend</h4>
+                    <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-300">
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_5px_rgba(250,204,21,0.6)]"></span>
+                            Sun Ray
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.6)]"></span>
+                            Heat
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span
+                                class="w-2 h-2 rounded-full bg-fuchsia-500 shadow-[0_0_5px_rgba(217,70,239,0.6)]"></span>
+                            IR Ray
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]"></span>
+                            CO₂
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temperature Graph Area -->
+            <div class="h-40 bg-slate-900/50 border-t border-slate-700/50 p-3 relative flex flex-col">
+                <div class="flex justify-between items-center mb-1">
+                    <h4 class="text-[10px] font-bold text-slate-500 uppercase">Temperature History</h4>
+                    <button onclick="exportData()"
+                        class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 transition-colors">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        EXPORT
+                    </button>
+                </div>
+                <div class="flex-1 w-full bg-slate-800/30 rounded border border-slate-700/30 overflow-hidden relative">
+                    <canvas id="graphCanvas" class="w-full h-full block"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Logic Script -->
+    <script src="script.js"></script>
+</body>
+
+</html>

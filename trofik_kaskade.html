@@ -223,6 +223,22 @@
                 </div>
             </div>
 
+            <!-- STABILITY INDICATOR -->
+            <div class="glass-panel p-4 rounded-xl shadow-lg flex flex-col gap-2">
+                <div class="flex justify-between items-end">
+                    <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Ecosystem
+                        Stability</span>
+                    <span id="stab-score" class="text-xl font-bold text-emerald-400">--</span>
+                </div>
+                <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                    <div id="stab-bar" class="bg-emerald-500 h-full w-[0%] transition-all duration-500"></div>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <span id="stab-text"
+                        class="text-[10px] font-mono text-slate-300 bg-slate-800 px-2 py-1 rounded">ANALYZING...</span>
+                </div>
+            </div>
+
             <!-- CONTROLS -->
             <div class="glass-panel p-5 rounded-xl shadow-lg flex flex-col gap-4 h-1/2 overflow-y-auto">
                 <h2
@@ -335,6 +351,61 @@
         }
 
         /**
+         * STABILITY TRACKER
+         * Analyzes population variances to determine ecosystem health
+         */
+        class StabilityTracker {
+            constructor() {
+                this.historySize = 300; // ~5 seconds at 60fps
+                this.herbHistory = [];
+                this.carnHistory = [];
+                this.status = "ANALYZING";
+                this.score = 100;
+            }
+
+            update(herbCount, carnCount) {
+                this.herbHistory.push(herbCount);
+                this.carnHistory.push(carnCount);
+                if (this.herbHistory.length > this.historySize) this.herbHistory.shift();
+                if (this.carnHistory.length > this.historySize) this.carnHistory.shift();
+
+                if (this.herbHistory.length < 60) return; // Need more data
+
+                // Calculate Volatility (Coefficient of Variation)
+                const herbVol = this.getCV(this.herbHistory);
+                const carnVol = this.getCV(this.carnHistory);
+
+                // Determine State
+                const meanHerb = this.getMean(this.herbHistory);
+
+                if (meanHerb < 20) {
+                    this.status = "COLLAPSED";
+                    this.score = 0;
+                } else if (herbVol < 0.15 && carnVol < 0.20) {
+                    this.status = "STABLE";
+                    this.score = 90;
+                } else if (herbVol < 0.35) {
+                    this.status = "OSCILLATING"; // Natural Cycles
+                    this.score = 60;
+                } else {
+                    this.status = "UNSTABLE"; // Chaos
+                    this.score = 20;
+                }
+            }
+
+            getMean(arr) {
+                return arr.reduce((a, b) => a + b, 0) / arr.length;
+            }
+
+            getCV(arr) { // Coefficient of Variation (StdDev / Mean)
+                const mean = this.getMean(arr);
+                if (mean === 0) return 0;
+                const variance = arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length;
+                return Math.sqrt(variance) / mean;
+            }
+        }
+
+        /**
          * CONFIG
          */
         const CONFIG = {
@@ -343,8 +414,8 @@
             herbivoreHunger: 0.20, // Increased from 0.12 (Starve faster)
             carnivoreHunger: 0.35, // Increased significantly from 0.18 (Starve faster)
             herbivoreReproRate: 0.5,
-            maxHerbivores: 450, // Raised Cap (Natural balance should keep it lower)
-            maxCarnivores: 140, // Increased Cap to allow "Bonfire" control
+            maxHerbivores: 1000, // Reduced Cap for Stability
+            maxCarnivores: 100, // Reduced Cap
             maxPlants: 2500, // Raised Plant Cap
             flocking: {
                 align: 1.0,
@@ -470,7 +541,7 @@
                 this.maxForce = 0.04;
                 this.energy = 100; // Start lower (Survive first)
                 this.maxEnergy = 200;
-                this.seeds = 0; // Stored seeds
+                this.seeds = 10; // Forced initial seeds for immediate feedback
             }
 
             getMetabolicRate() {
@@ -511,10 +582,12 @@
                 this.applyForce(flee);
                 this.applyForce(eat);
 
-                // ZOOCHORY: Drop Seeds
-                if (this.seeds > 0 && Math.random() < 0.05) { // BUFF: faster dropping (was 0.02)
+                // ZOOCHORY: Drop Seeds (Manure/Kotoran)
+                // Herbivores excrete seeds which then grow
+                if (this.seeds > 0 && Math.random() < 0.20) { // SUPER BUFF: 20% chance
                     this.seeds--;
-                    allPlantsArray.push(new Plant(this.pos.x, this.pos.y, 0.5));
+                    // Drop a larger seed (size 3) so it's clearly visible as a "Green Dot" / Manure
+                    allPlantsArray.push(new Plant(this.pos.x, this.pos.y, 3.0));
                 }
             }
 
@@ -773,8 +846,10 @@
             carnivores: [],
             decomposers: [],
             organicMatter: [],
+            organicMatter: [],
             globalNutrients: 100, // 0-100 scale
             animationId: null,
+            stability: new StabilityTracker(),
 
             // Camera State
             camera: { x: 0, y: 0, scale: 1 },
@@ -888,7 +963,10 @@
                 this.carnivores = [];
                 this.decomposers = [];
                 this.organicMatter = [];
+                this.decomposers = [];
+                this.organicMatter = [];
                 this.globalNutrients = 100;
+                this.stability = new StabilityTracker();
 
                 const msg = document.getElementById('status-message');
 
@@ -1017,25 +1095,41 @@
                 }
 
                 // Decomposers seek matter
-                this.decomposers.forEach(d => {
+                // FILTER: Remove dead decomposers and apply FERTILIZER effect
+                this.decomposers = this.decomposers.filter(d => {
                     d.update();
+
+                    // Life Check
+                    if (d.life <= 0) {
+                        // DISTURBANCE / FERTILIZER EFFECT
+                        // When decomposer dies, it releases nutrients that boost nearby plants immediately
+                        let nearbyPlants = gridPlant.query(d.pos.x, d.pos.y, 40);
+                        nearbyPlants.forEach(p => {
+                            p.size += 2.5; // Fertilizer boost!
+                            if (p.size > p.maxSize) p.size = p.maxSize;
+                        });
+                        return false; // Remove from array
+                    }
+
                     // Simple interaction: if persistent nearby matter, multiply
                     if (this.organicMatter.length > 0 && Math.random() < 0.01) {
-                        // Find nearest
-                        // If close, "eat" and boost global nutrients
-                        // For simplicity, just boost nutrient randomly if matter exists
                         this.globalNutrients += 0.05;
                     }
+                    return true;
                 });
+
                 if (this.globalNutrients > 100) this.globalNutrients = 100;
 
                 // Spawn decomposers if plenty of matter
-                if (this.organicMatter.length > 5 && this.decomposers.length < 100 && Math.random() < 0.05) {
+                if (this.organicMatter.length > 5 && this.decomposers.length < 150 && Math.random() < 0.05) {
                     this.decomposers.push(new Decomposer(Math.random() * CONFIG.width, Math.random() * CONFIG.height));
                 }
 
                 // Clean dead plants
                 this.plants = this.plants.filter(p => p.alive);
+
+                // Update Stability
+                this.stability.update(this.herbivores.length, this.carnivores.length);
 
                 this.updateUI();
             },
@@ -1080,8 +1174,8 @@
                 else nutEl.className = "font-mono text-red-400";
 
                 const MAX_PLANT = 3500;
-                const MAX_HERB = 350; // Adjusted for 10% rule roughly
-                const MAX_CARN = 35;  // Adjusted for 1% rule roughly
+                const MAX_HERB = 20000; // Adjusted for 1000 * 20
+                const MAX_CARN = 5000;  // Adjusted for 100 * 50
 
                 const pW = Math.min((plantMass / MAX_PLANT) * 100, 100);
                 const hW = Math.min((herbMass / MAX_HERB) * 100, 100);
@@ -1097,6 +1191,32 @@
                 } else {
                     document.getElementById('block-producer').classList.add('from-emerald-500', 'to-emerald-600');
                     document.getElementById('block-producer').classList.remove('from-amber-700', 'to-amber-800');
+                }
+
+                // UI: Stability
+                const st = this.stability;
+                document.getElementById('stab-score').innerText = st.score;
+                document.getElementById('stab-bar').style.width = st.score + '%';
+
+                const stabText = document.getElementById('stab-text');
+                stabText.innerText = st.status;
+
+                if (st.status === 'STABLE') {
+                    stabText.className = "text-[10px] font-mono text-emerald-200 bg-emerald-900/50 px-2 py-1 rounded border border-emerald-500/30";
+                    document.getElementById('stab-bar').className = "bg-emerald-500 h-full w-[0%] transition-all duration-500";
+                    document.getElementById('stab-score').className = "text-xl font-bold text-emerald-400";
+                } else if (st.status === 'OSCILLATING') {
+                    stabText.className = "text-[10px] font-mono text-blue-200 bg-blue-900/50 px-2 py-1 rounded border border-blue-500/30";
+                    document.getElementById('stab-bar').className = "bg-blue-500 h-full w-[0%] transition-all duration-500";
+                    document.getElementById('stab-score').className = "text-xl font-bold text-blue-400";
+                } else if (st.status === 'UNSTABLE') {
+                    stabText.className = "text-[10px] font-mono text-orange-200 bg-orange-900/50 px-2 py-1 rounded border border-orange-500/30 animate-pulse";
+                    document.getElementById('stab-bar').className = "bg-orange-500 h-full w-[0%] transition-all duration-500";
+                    document.getElementById('stab-score').className = "text-xl font-bold text-orange-400";
+                } else { // COLLAPSED
+                    stabText.className = "text-[10px] font-mono text-red-200 bg-red-900/50 px-2 py-1 rounded border border-red-500/30";
+                    document.getElementById('stab-bar').className = "bg-red-600 h-full w-[0%] transition-all duration-500";
+                    document.getElementById('stab-score').className = "text-xl font-bold text-red-500";
                 }
             },
 

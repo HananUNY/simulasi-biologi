@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Invariansi Waktu Biologis (Jurnal Maglione)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat Lucide dengan penanganan error -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.js"
+        onerror="this.onerror=null; window.lucideFailed=true;"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-700 p-4 shadow-lg sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div>
+                <h1
+                    class="text-xl md:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-400">
+                    Simulasi Invariansi Waktu Biologis
+                </h1>
+                <p class="text-xs text-slate-400 mt-1">Berdasarkan Jurnal: D. Maglione (2025)</p>
+            </div>
+            <button id="infoBtn" class="text-slate-300 hover:text-white transition">
+                <i data-lucide="info" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Controls Panel -->
+        <aside class="lg:col-span-1 bg-slate-800 rounded-xl p-6 shadow-xl border border-slate-700 h-fit">
+            <h2 class="text-lg font-semibold mb-4 text-blue-300 flex items-center gap-2">
+                <i data-lucide="sliders" class="w-5 h-5"></i> Parameter Eksperimen
+            </h2>
+
+            <!-- Velocity Control -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2 flex justify-between">
+                    <span>Kecepatan Pesawat (v)</span>
+                    <span id="vDisplay" class="text-blue-400 font-mono">0.00 c</span>
+                </label>
+                <input type="range" id="vSlider" min="0" max="0.99" step="0.01" value="0.0" class="w-full">
+                <div class="mt-2 p-2 bg-slate-900 rounded border border-slate-600">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>Faktor Lorentz (γ):</span>
+                        <span id="gammaDisplay" class="text-green-400 font-mono font-bold">1.000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation Parameters -->
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase tracking-wide mb-1">Target Waktu (Proper
+                        Time)</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="targetTimeInput" value="10"
+                            class="bg-slate-700 border border-slate-600 rounded px-2 py-1 w-20 text-center text-sm font-mono text-white">
+                        <span class="text-sm">Jam</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 uppercase tracking-wide mb-1">Waktu Duplikasi
+                        Bakteri</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="doublingTimeInput" value="2"
+                            class="bg-slate-700 border border-slate-600 rounded px-2 py-1 w-20 text-center text-sm font-mono text-white">
+                        <span class="text-sm">Jam</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-3">
+                <button id="startBtn"
+                    class="bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-lg font-medium transition shadow-lg shadow-blue-900/50 flex justify-center items-center gap-2">
+                    <i data-lucide="play" class="w-4 h-4"></i> Mulai
+                </button>
+                <button id="resetBtn"
+                    class="bg-slate-600 hover:bg-slate-500 text-white py-2 px-4 rounded-lg font-medium transition flex justify-center items-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
+                </button>
+            </div>
+
+            <!-- Status -->
+            <div id="statusMessage"
+                class="mt-6 text-sm text-center text-yellow-400 font-medium opacity-0 transition-opacity">
+                Simulasi Berjalan...
+            </div>
+        </aside>
+
+        <!-- Simulation Visualization -->
+        <section class="lg:col-span-2 space-y-6">
+
+            <!-- Reference Frame: EARTH (System T) -->
+            <div class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl relative">
+                <div class="bg-slate-700/50 p-3 border-b border-slate-600 flex justify-between items-center">
+                    <h3 class="font-semibold text-green-400 flex items-center gap-2">
+                        <i data-lucide="globe" class="w-5 h-5"></i> Sistem T: Bumi (Diam)
+                    </h3>
+                    <span class="text-xs bg-slate-900 px-2 py-1 rounded text-slate-300 font-mono">v = 0</span>
+                </div>
+                <div class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Polished Clock Visual -->
+                    <div class="flex flex-col items-center justify-center p-2 bg-slate-900/50 rounded-lg">
+                        <div class="w-24 h-24 mb-2 relative">
+                            <!-- SVG Clock -->
+                            <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg">
+                                <defs>
+                                    <radialGradient id="clockFaceGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                                        <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+                                        <stop offset="90%" style="stop-color:#0f172a;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#020617;stop-opacity:1" />
+                                    </radialGradient>
+                                </defs>
+                                <!-- Bezel -->
+                                <circle cx="50" cy="50" r="48" fill="#334155" />
+                                <!-- Face -->
+                                <circle cx="50" cy="50" r="44" fill="url(#clockFaceGrad)" stroke="#475569"
+                                    stroke-width="1" />
+
+                                <!-- Ticks (Cardinal) -->
+                                <line x1="50" y1="10" x2="50" y2="15" stroke="#94a3b8" stroke-width="2" />
+                                <line x1="90" y1="50" x2="85" y2="50" stroke="#94a3b8" stroke-width="2" />
+                                <line x1="50" y1="90" x2="50" y2="85" stroke="#94a3b8" stroke-width="2" />
+                                <line x1="10" y1="50" x2="15" y2="50" stroke="#94a3b8" stroke-width="2" />
+
+                                <!-- Ticks (Sub) -->
+                                <g stroke="#64748b" stroke-width="1">
+                                    <path
+                                        d="M70 15.3 L67.5 19.6 M84.6 30 L80.3 32.5 M80.3 67.5 L84.6 70 M67.5 80.3 L70 84.6 M32.5 80.3 L30 84.6 M15.3 70 L19.6 67.5 M19.6 32.5 L15.3 30 M30 15.3 L32.5 19.6" />
+                                </g>
+
+                                <!-- Hand - Using Path for robustness, no filter -->
+                                <path id="earthClockHand" d="M50 50 L50 18" stroke="#ef4444" stroke-width="3"
+                                    stroke-linecap="round" class="clock-svg-hand" />
+
+                                <!-- Center Pin -->
+                                <circle cx="50" cy="50" r="3" fill="#e2e8f0" stroke="#1e293b" stroke-width="1" />
+                            </svg>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-slate-400">Jam Fisik (t)</div>
+                            <div id="earthTimeText" class="text-xl font-mono font-bold tracking-wider">0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Bacteria Visual -->
+                    <div
+                        class="col-span-2 bg-slate-900/80 rounded-lg p-3 relative min-h-[140px] border border-slate-700/50">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="text-xs text-slate-500 font-mono">Kultur A</div>
+                            <div class="text-xs text-slate-500">Target: <span class="text-slate-300"
+                                    id="earthTargetDisplay">10h</span></div>
+                        </div>
+                        <div id="earthBacteriaContainer" class="bacteria-container h-[80px]">
+                            <!-- Bacteria added here via JS -->
+                            <div class="bacterium"></div>
+                        </div>
+                        <div
+                            class="absolute bottom-2 right-3 bg-black/60 px-3 py-1 rounded text-xs border border-slate-700">
+                            Gen (G): <span id="earthG" class="text-green-400 font-bold text-base font-mono">0.0</span>
+                        </div>
+                        <div
+                            class="absolute bottom-2 left-3 bg-black/60 px-3 py-1 rounded text-xs border border-slate-700">
+                            Jml: <span id="earthCount" class="text-white font-bold font-mono">1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reference Frame: SPACECRAFT (System A) -->
+            <div class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl relative">
+                <div class="bg-slate-700/50 p-3 border-b border-slate-600 flex justify-between items-center">
+                    <h3 class="font-semibold text-blue-400 flex items-center gap-2">
+                        <i data-lucide="rocket" class="w-5 h-5"></i> Sistem A: Pesawat (Relativistik)
+                    </h3>
+                    <span id="spacecraftVLabel"
+                        class="text-xs bg-slate-900 px-2 py-1 rounded text-slate-300 font-mono">v = 0.00c</span>
+                </div>
+                <div class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Polished Clock Visual -->
+                    <div class="flex flex-col items-center justify-center p-2 bg-slate-900/50 rounded-lg">
+                        <div class="w-24 h-24 mb-2 relative">
+                            <!-- SVG Clock -->
+                            <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg">
+                                <!-- Reusing defs logic implicitly or duplicated for safety -->
+                                <defs>
+                                    <radialGradient id="clockFaceGrad2" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                                        <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+                                        <stop offset="90%" style="stop-color:#0f172a;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#020617;stop-opacity:1" />
+                                    </radialGradient>
+                                </defs>
+                                <!-- Bezel -->
+                                <circle cx="50" cy="50" r="48" fill="#334155" />
+                                <!-- Face -->
+                                <circle cx="50" cy="50" r="44" fill="url(#clockFaceGrad2)" stroke="#475569"
+                                    stroke-width="1" />
+
+                                <!-- Ticks (Cardinal) -->
+                                <line x1="50" y1="10" x2="50" y2="15" stroke="#94a3b8" stroke-width="2" />
+                                <line x1="90" y1="50" x2="85" y2="50" stroke="#94a3b8" stroke-width="2" />
+                                <line x1="50" y1="90" x2="50" y2="85" stroke="#94a3b8" stroke-width="2" />
+                                <line x1="10" y1="50" x2="15" y2="50" stroke="#94a3b8" stroke-width="2" />
+
+                                <!-- Ticks (Sub) -->
+                                <g stroke="#64748b" stroke-width="1">
+                                    <path
+                                        d="M70 15.3 L67.5 19.6 M84.6 30 L80.3 32.5 M80.3 67.5 L84.6 70 M67.5 80.3 L70 84.6 M32.5 80.3 L30 84.6 M15.3 70 L19.6 67.5 M19.6 32.5 L15.3 30 M30 15.3 L32.5 19.6" />
+                                </g>
+
+                                <!-- Hand - Using Path for robustness -->
+                                <path id="spaceClockHand" d="M50 50 L50 18" stroke="#3b82f6" stroke-width="3"
+                                    stroke-linecap="round" class="clock-svg-hand" />
+
+                                <!-- Center Pin -->
+                                <circle cx="50" cy="50" r="3" fill="#e2e8f0" stroke="#1e293b" stroke-width="1" />
+                            </svg>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-slate-400">Jam Fisik (t')</div>
+                            <div class="text-[10px] text-slate-500 mb-1">(Dilihat dari Bumi)</div>
+                            <div id="spaceTimeText" class="text-xl font-mono font-bold text-blue-300 tracking-wider">
+                                0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Bacteria Visual -->
+                    <div
+                        class="col-span-2 bg-slate-900/80 rounded-lg p-3 relative min-h-[140px] border border-slate-700/50">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="text-xs text-slate-500 font-mono">Kultur B</div>
+                            <div class="text-xs text-slate-500">Target: <span class="text-slate-300"
+                                    id="spaceTargetDisplay">10h</span></div>
+                        </div>
+                        <div id="spaceBacteriaContainer" class="bacteria-container h-[80px]">
+                            <!-- Bacteria added here via JS -->
+                            <div class="bacterium space"></div>
+                        </div>
+                        <div
+                            class="absolute bottom-2 right-3 bg-black/60 px-3 py-1 rounded text-xs border border-slate-700">
+                            Gen (G): <span id="spaceG" class="text-blue-400 font-bold text-base font-mono">0.0</span>
+                        </div>
+                        <div
+                            class="absolute bottom-2 left-3 bg-black/60 px-3 py-1 rounded text-xs border border-slate-700">
+                            Jml: <span id="spaceCount" class="text-white font-bold font-mono">1</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Time Dilation Visual Indicator -->
+                <div id="dilationIndicator"
+                    class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-2 rounded-full text-sm font-bold backdrop-blur-sm shadow-xl z-20">
+                    Time Dilation Active
+                </div>
+            </div>
+
+            <!-- Conclusion Box -->
+            <div class="bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-sm text-slate-300">
+                <h4 class="font-bold text-white mb-2">Analisis Hasil (Perspektif Pengamat Bumi):</h4>
+                <p class="mb-2">
+                    Meskipun jam di pesawat bergerak lebih lambat (Dilatasi Waktu) dan bakteri terlihat membelah lebih
+                    lambat dari perspektif Bumi,
+                    ketika jam pesawat mencapai waktu target (Proper Time), jumlah generasi bakteri (G) akan
+                    <strong>SAMA</strong> dengan di Bumi.
+                </p>
+                <div class="grid grid-cols-2 gap-4 mt-3 font-mono text-center">
+                    <div class="bg-slate-800 p-2 rounded border border-slate-700">
+                        <div class="text-xs text-gray-500">G Bumi</div>
+                        <div id="resultEarthG" class="text-lg font-bold text-green-500">-</div>
+                    </div>
+                    <div class="bg-slate-800 p-2 rounded border border-slate-700">
+                        <div class="text-xs text-gray-500">G Pesawat</div>
+                        <div id="resultSpaceG" class="text-lg font-bold text-blue-500">-</div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Modal Info -->
+    <div id="infoModal"
+        class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-slate-800 max-w-2xl w-full rounded-2xl shadow-2xl border border-slate-600 p-6 relative">
+            <button id="closeInfoBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h2 class="text-2xl font-bold mb-4 text-white">Tentang Simulasi Ini</h2>
+            <div class="space-y-3 text-slate-300 text-sm leading-relaxed overflow-y-auto max-h-[60vh]">
+                <p>
+                    Simulasi ini didasarkan pada jurnal <strong>"Cellular Generation Number as an Invariant Measure of
+                        Biological Time..." oleh Domenico Maglione (2025)</strong>.
+                </p>
+                <p>
+                    <strong>Konsep Utama:</strong> Relativitas Khusus Einstein menyatakan bahwa waktu bersifat relatif
+                    (Time Dilation). Sebuah jam yang bergerak dengan kecepatan tinggi (v) akan berjalan lebih lambat
+                    jika diamati dari kerangka diam.
+                </p>
+                <p>
+                    Namun, Maglione berargumen bahwa <strong>Waktu Biologis</strong> (diukur dengan jumlah pembelahan
+                    sel/Generasi G) adalah <strong>Invarian</strong> (tetap sama).
+                </p>
+                <ul class="list-disc pl-5 space-y-1 text-slate-400">
+                    <li><strong>G</strong> = Waktu Pertumbuhan / Waktu Duplikasi.</li>
+                    <li>Di pesawat yang bergerak cepat, Waktu Pertumbuhan melambat (dilatasi).</li>
+                    <li>TAPI, Waktu Duplikasi sel juga melambat dengan faktor yang sama.</li>
+                    <li>Kedua efek ini saling meniadakan, sehingga G tetap sama.</li>
+                </ul>
+                <p class="italic text-yellow-400/80 border-l-2 border-yellow-500 pl-3 mt-2">
+                    "Biological Systems do Not Experience Time Dilation" - dalam artian penuaan biologis (jumlah siklus
+                    sel) tetap konsisten dengan proper time masing-masing.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+
+</html>

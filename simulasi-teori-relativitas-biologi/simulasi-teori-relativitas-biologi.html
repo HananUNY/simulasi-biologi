@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Teori Relativitas Biologis (BTR)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body
+    class="bg-gray-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 min-h-screen flex flex-col items-center p-4 transition-colors duration-300">
+
+    <!-- Header -->
+    <header class="w-full max-w-5xl mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-4">
+            <a href="../index.html"
+                class="p-2 bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg border border-gray-200 dark:border-slate-600 transition-colors shadow-sm cursor-pointer"
+                title="Kembali ke Menu Utama">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="w-5 h-5">
+                    <path d="m12 19-7-7 7-7" />
+                    <path d="M19 12H5" />
+                </svg>
+            </a>
+            <div class="text-center md:text-left">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white mb-1">Teori Relativitas
+                    Biologis (BTR)</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm max-w-xl">
+                    Visualisasi perbedaan "waktu biologis" antar spesies. Berdasarkan makalah Anna B. Neuheimer.
+                </p>
+            </div>
+        </div>
+
+        <button id="themeBtn"
+            class="p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 transition-colors shadow-sm cursor-pointer">
+            <!-- Moon Icon (Visible in Light Mode) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="w-5 h-5 block dark:hidden">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+            <!-- Sun Icon (Visible in Dark Mode) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="w-5 h-5 hidden dark:block">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2" />
+                <path d="M12 20v2" />
+                <path d="m4.93 4.93 1.41 1.41" />
+                <path d="m17.66 17.66 1.41 1.41" />
+                <path d="M2 12h2" />
+                <path d="M20 12h2" />
+                <path d="m6.34 17.66-1.41 1.41" />
+                <path d="m19.07 4.93-1.41 1.41" />
+            </svg>
+        </button>
+    </header>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Controls & Legend -->
+        <div class="lg:col-span-1 space-y-4">
+            <!-- Control Panel -->
+            <div class="glass-panel rounded-2xl p-6">
+                <h2 class="font-bold text-lg mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-5 h-5">
+                        <line x1="4" x2="4" y1="21" y2="14" />
+                        <line x1="4" x2="4" y1="10" y2="3" />
+                        <line x1="12" x2="12" y1="21" y2="12" />
+                        <line x1="12" x2="12" y1="8" y2="3" />
+                        <line x1="20" x2="20" y1="21" y2="16" />
+                        <line x1="20" x2="20" y1="12" y2="3" />
+                        <line x1="2" x2="6" y1="14" y2="14" />
+                        <line x1="10" x2="14" y1="8" y2="8" />
+                        <line x1="18" x2="22" y1="16" y2="16" />
+                    </svg>
+                    Kontrol Lingkungan
+                </h2>
+
+                <div class="mb-6">
+                    <label
+                        class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex justify-between">
+                        <span>Suhu Lingkungan (°C)</span>
+                        <span id="tempValue"
+                            class="font-mono bg-slate-200 dark:bg-slate-700 px-2 rounded text-slate-800 dark:text-slate-200">20.0°C</span>
+                    </label>
+                    <input type="range" id="tempSlider" min="0" max="45" value="20"
+                        class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-slate-400 mt-1">
+                        <span>Dingin (0°C)</span>
+                        <span>Panas (45°C)</span>
+                    </div>
+                </div>
+
+                <!-- Species Selection -->
+                <div class="mb-6 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Pilih Spesies</label>
+
+                    <div class="mb-3">
+                        <label class="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-1 block">Endoterm
+                            (Berdarah Panas)</label>
+                        <select id="endoSelect"
+                            class="w-full bg-orange-50 dark:bg-slate-800 border border-orange-200 dark:border-slate-600 text-orange-800 dark:text-orange-300 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 block p-2.5">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-1 block">Ektoterm
+                            (Berdarah Dingin)</label>
+                        <select id="ectoSelect"
+                            class="w-full bg-teal-50 dark:bg-slate-800 border border-teal-200 dark:border-slate-600 text-teal-800 dark:text-teal-300 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block p-2.5">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <div
+                    class="flex items-center justify-between mb-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Mode Musiman</span>
+                    <button id="seasonBtn"
+                        class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-1.5 px-4 rounded-full transition-colors text-xs">
+                        Mati
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between mb-6">
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Mode Buta Warna</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="cbToggle" value="" class="sr-only peer">
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                        </div>
+                    </label>
+                </div>
+
+                <button id="resetBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors shadow-lg shadow-blue-500/30 text-sm flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="w-4 h-4">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                    </svg>
+                    Reset Simulasi
+                </button>
+            </div>
+
+            <!-- Organism Info -->
+            <div class="glass-panel rounded-2xl p-6">
+                <h3 class="font-bold text-slate-900 dark:text-white mb-3 text-sm">Detail Organisme Terpilih</h3>
+
+                <div class="space-y-3">
+                    <div id="endoInfoBox"
+                        class="p-3 bg-orange-50 rounded-xl border border-orange-100 transition-colors">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span id="endoColorDot" class="w-3 h-3 rounded-full bg-orange-500"></span>
+                            <span id="endoNameDisplay" class="font-bold text-orange-900 text-sm">Endoterm</span>
+                        </div>
+                        <p id="endoDescDisplay" class="text-xs text-orange-800 leading-snug">
+                            Deskripsi endoterm...
+                        </p>
+                    </div>
+
+                    <div id="ectoInfoBox" class="p-3 bg-teal-50 rounded-xl border border-teal-100 transition-colors">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span id="ectoColorDot" class="w-3 h-3 rounded-full bg-teal-500"></span>
+                            <span id="ectoNameDisplay" class="font-bold text-teal-900 text-sm">Ektoterm</span>
+                        </div>
+                        <p id="ectoDescDisplay" class="text-xs text-teal-800 leading-snug">
+                            Deskripsi ektoterm...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation Visualization -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Main Canvas: The Race -->
+            <div class="glass-panel rounded-2xl p-1 relative overflow-hidden bg-white dark:bg-slate-800">
+                <div
+                    class="absolute top-4 left-4 z-10 bg-white/80 dark:bg-slate-900/80 px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm border border-white/50 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+                    Laju Pertumbuhan (Biological Time)
+                </div>
+                <canvas id="raceCanvas" class="w-full h-64 rounded-xl"></canvas>
+            </div>
+
+            <!-- Graph Canvas: TPC & Rates -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel rounded-2xl p-4 relative bg-white dark:bg-slate-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kurva
+                            Performa (TPC)</h4>
+                        <span
+                            class="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">Laju
+                            Reaksi vs Suhu</span>
+                    </div>
+                    <canvas id="tpcCanvas" class="w-full h-40"></canvas>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-4 relative bg-white dark:bg-slate-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Akumulasi Waktu</h4>
+                        <span
+                            class="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">Bio
+                            vs Kalender</span>
+                    </div>
+                    <canvas id="timeCanvas" class="w-full h-40"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explanation Section -->
+    <div class="w-full max-w-5xl mt-8 p-6 glass-panel rounded-2xl">
+        <h3 class="text-lg font-bold mb-3 text-slate-800 dark:text-white">Catatan Simulasi</h3>
+        <div class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed space-y-2">
+            <p>
+                <strong>Mengapa Salmon mati di suhu panas?</strong> Ikan salmon adalah ikan air dingin. Jika suhu
+                melewati batas toleransi kritisnya (misal >23°C), enzimnya berhenti bekerja efektif dan stres panas
+                terjadi, sehingga laju pertumbuhannya nol (atau mati).
+            </p>
+            <p>
+                <strong>Mengapa Kadal Gurun lambat di suhu dingin?</strong> Sebagai ektoterm yang beradaptasi dengan
+                panas, kadal gurun membutuhkan energi panas eksternal tinggi untuk mengaktifkan metabolismenya. Di suhu
+                dingin (misal 15°C), mereka menjadi lamban (dormant).
+            </p>
+        </div>
+    </div>
+
+    <script>
+
+        // Theme Toggle Logic
+        const themeBtn = document.getElementById('themeBtn');
+        themeBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+        });
+    </script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

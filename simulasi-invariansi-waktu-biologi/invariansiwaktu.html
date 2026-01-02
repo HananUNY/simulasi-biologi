@@ -9,6 +9,7 @@
     <!-- Memuat Lucide dengan penanganan error -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.js"
         onerror="this.onerror=null; window.lucideFailed=true;"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -178,9 +179,10 @@
                             <div class="text-xs text-slate-500">Target: <span class="text-slate-300"
                                     id="earthTargetDisplay">10h</span></div>
                         </div>
-                        <div id="earthBacteriaContainer" class="bacteria-container h-[80px]">
+                        <div id="earthBacteriaContainer" class="bacteria-container h-[80px] relative">
                             <!-- Bacteria added here via JS -->
                             <div class="bacterium"></div>
+                            <canvas id="earthChartCanvas" class="hidden absolute inset-0 w-full h-full"></canvas>
                         </div>
                         <div
                             class="absolute bottom-2 right-3 bg-black/60 px-3 py-1 rounded text-xs border border-slate-700">
@@ -260,9 +262,10 @@
                             <div class="text-xs text-slate-500">Target: <span class="text-slate-300"
                                     id="spaceTargetDisplay">10h</span></div>
                         </div>
-                        <div id="spaceBacteriaContainer" class="bacteria-container h-[80px]">
+                        <div id="spaceBacteriaContainer" class="bacteria-container h-[80px] relative">
                             <!-- Bacteria added here via JS -->
                             <div class="bacterium space"></div>
+                            <canvas id="spaceChartCanvas" class="hidden absolute inset-0 w-full h-full"></canvas>
                         </div>
                         <div
                             class="absolute bottom-2 right-3 bg-black/60 px-3 py-1 rounded text-xs border border-slate-700">
